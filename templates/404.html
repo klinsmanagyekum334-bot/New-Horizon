@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-header-title">404</h1>
+    <p class="page-header-sub">Sorry, we couldn't find that page.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="text-align:center; max-width:600px; margin:0 auto;">
+    <i class="fa-solid fa-compass" style="font-size:4rem; color:#0d9488; margin-bottom:20px;"></i>
+    <h2 style="margin-bottom:12px;">Page Not Found</h2>
+    <p style="color:#64748b; margin-bottom:24px;">
+      The page you're looking for doesn't exist or may have been moved.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn-primary">
+      <i class="fa-solid fa-house"></i> Back to Home
+    </a>
+  </div>
+</section>
+{% endblock %}
