@@ -1,0 +1,218 @@
+{% extends "update/base_update.html" %}
+{% block title %}{{ 'Edit' if project else 'Add' }} Project — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">{{ 'Edit' if project else 'Add' }} Project</h1>
+    <p class="update-page-sub">
+      {{ 'Update the details below.' if project else 'Fill in the details to add a new project.' }}
+    </p>
+  </div>
+  <a href="{{ url_for('update_projects') }}" class="update-btn update-btn-secondary">
+    <i class="fa-solid fa-arrow-left"></i> Back
+  </a>
+</div>
+
+<form method="POST"
+      action="{{ url_for('update_project_edit', pid=project.id) if project else url_for('update_project_new') }}"
+      enctype="multipart/form-data"
+      class="update-form">
+
+  <!-- Basic Info -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-circle-info"></i> Basic Information</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field full">
+        <label for="name">Project Name *</label>
+        <input type="text" id="name" name="name"
+               value="{{ project.name if project else '' }}" required>
+      </div>
+
+      <div class="update-field full">
+        <label for="slug">URL Slug *</label>
+        <input type="text" id="slug" name="slug"
+               value="{{ project.slug if project else '' }}"
+               placeholder="e.g. east-legon-villas" required>
+        <p class="update-hint">Lowercase, use hyphens instead of spaces.</p>
+      </div>
+
+      <div class="update-field">
+        <label for="category">Category *</label>
+        <select id="category" name="category" required>
+          <option value="residential" {% if project and project.category == 'residential' %}selected{% endif %}>Residential</option>
+          <option value="commercial"  {% if project and project.category == 'commercial'  %}selected{% endif %}>Commercial</option>
+        </select>
+      </div>
+
+      <div class="update-field">
+        <label for="status">Status *</label>
+        <select id="status" name="status" required>
+          {% for s in ['ongoing', 'available', 'pre-launch', 'sold-out'] %}
+          <option value="{{ s }}" {% if project and project.status == s %}selected{% endif %}>
+            {{ s | replace('-', ' ') | title }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="update-field">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location"
+               value="{{ project.location if project else '' }}"
+               placeholder="e.g. East Legon, Accra">
+      </div>
+
+      <div class="update-field">
+        <label for="units">Units</label>
+        <input type="text" id="units" name="units"
+               value="{{ project.units if project else '' }}"
+               placeholder="e.g. 48 Villas">
+      </div>
+
+      <div class="update-field">
+        <label for="price_from">Price From ($)</label>
+        <input type="number" id="price_from" name="price_from"
+               value="{{ project.price_from if project else '' }}"
+               placeholder="e.g. 420000" min="0" step="1">
+      </div>
+
+      <div class="update-field">
+        <label for="sort_order">Sort Order</label>
+        <input type="number" id="sort_order" name="sort_order"
+               value="{{ project.sort_order if project else 99 }}" min="0">
+      </div>
+
+      <div class="update-field full update-checkbox-field">
+        <label class="update-checkbox">
+          <input type="checkbox" name="featured"
+                 {% if project and project.featured %}checked{% endif %}>
+          <span>Feature this project (shows in the homepage carousel)</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Descriptions -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-align-left"></i> Descriptions</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field full">
+        <label for="short_desc">Short Description</label>
+        <textarea id="short_desc" name="short_desc" rows="3"
+                  placeholder="One-line summary shown on the card.">{{ project.short_desc if project else '' }}</textarea>
+      </div>
+
+      <div class="update-field full">
+        <label for="long_desc">Long Description</label>
+        <textarea id="long_desc" name="long_desc" rows="6"
+                  placeholder="Full project description shown on the detail page.">{{ project.long_desc if project else '' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Images -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-image"></i> Images</h2>
+
+    <!-- Card Image -->
+    <div class="update-field full update-image-field">
+      <label>Card Image (thumbnail on the site)</label>
+      <div class="update-image-row">
+        <div class="update-image-preview">
+          <img id="preview_image"
+               src="{{ project.image if project and project.image else 'https://picsum.photos/seed/newhorizon/300/200' }}"
+               alt="Card preview">
+        </div>
+        <div class="update-image-controls">
+          <div class="update-image-actions">
+            <label for="image_file" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-folder-open"></i> From Gallery
+            </label>
+            <input type="file" id="image_file" name="image_file"
+                   accept="image/*" hidden
+                   onchange="previewFile(this, 'preview_image')">
+
+            <label for="image_camera" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-camera"></i> Take Photo
+            </label>
+            <input type="file" id="image_camera" name="image_file"
+                   accept="image/*" capture="environment" hidden
+                   onchange="previewFile(this, 'preview_image')">
+          </div>
+          <div class="update-field">
+            <label for="image_url">…or paste image URL</label>
+            <input type="text" id="image_url" name="image_url"
+                   value="{% if project and project.image and not project.image.startswith('/static/') %}{{ project.image }}{% endif %}"
+                   placeholder="https://..."
+                   oninput="previewUrl(this, 'preview_image')">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Image -->
+    <div class="update-field full update-image-field">
+      <label>Hero Image (large banner on detail page)</label>
+      <div class="update-image-row">
+        <div class="update-image-preview">
+          <img id="preview_hero"
+               src="{{ project.hero_image if project and project.hero_image else 'https://picsum.photos/seed/newhorizon-hero/400/225' }}"
+               alt="Hero preview">
+        </div>
+        <div class="update-image-controls">
+          <div class="update-image-actions">
+            <label for="hero_file" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-folder-open"></i> From Gallery
+            </label>
+            <input type="file" id="hero_file" name="hero_file"
+                   accept="image/*" hidden
+                   onchange="previewFile(this, 'preview_hero')">
+
+            <label for="hero_camera" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-camera"></i> Take Photo
+            </label>
+            <input type="file" id="hero_camera" name="hero_file"
+                   accept="image/*" capture="environment" hidden
+                   onchange="previewFile(this, 'preview_hero')">
+          </div>
+          <div class="update-field">
+            <label for="hero_url">…or paste image URL</label>
+            <input type="text" id="hero_url" name="hero_url"
+                   value="{% if project and project.hero_image and not project.hero_image.startswith('/static/') %}{{ project.hero_image }}{% endif %}"
+                   placeholder="https://..."
+                   oninput="previewUrl(this, 'preview_hero')">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="update-form-actions">
+    <a href="{{ url_for('update_projects') }}" class="update-btn update-btn-secondary">Cancel</a>
+    <button type="submit" class="update-btn update-btn-primary">
+      <i class="fa-solid fa-check"></i>
+      {{ 'Save Changes' if project else 'Create Project' }}
+    </button>
+  </div>
+
+</form>
+
+<script>
+  function previewFile(input, targetId) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { document.getElementById(targetId).src = e.target.result; };
+    reader.readAsDataURL(input.files[0]);
+  }
+  function previewUrl(input, targetId) {
+    const v = input.value.trim();
+    if (v) document.getElementById(targetId).src = v;
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "update/base_update.html" %}
+{% block title %}Navigation — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Navigation</h1>
+    <p class="update-page-sub">
+      Manage the header menu. <strong>Home</strong> is locked; the rest are editable.
+    </p>
+  </div>
+</div>
+
+<!-- Add new link -->
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-plus"></i> Add New Link</h2>
+
+  <form method="POST" action="{{ url_for('update_nav_new') }}" class="update-inline-form">
+    <div class="update-field">
+      <label>Label</label>
+      <input type="text" name="label" placeholder="e.g. Shipping" required>
+    </div>
+    <div class="update-field">
+      <label>URL</label>
+      <input type="text" name="url" placeholder="e.g. /shipping" required>
+    </div>
+    <div class="update-field update-field-sm">
+      <label>Order</label>
+      <input type="number" name="sort_order" value="99" min="0">
+    </div>
+    <button type="submit" class="update-btn update-btn-primary">
+      <i class="fa-solid fa-plus"></i> Add
+    </button>
+  </form>
+</div>
+
+<!-- Existing links -->
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-list"></i> Existing Links</h2>
+
+  <div class="update-nav-list">
+    {% for link in links %}
+    <div class="update-nav-row {% if link.is_locked %}update-nav-row-locked{% endif %}">
+
+      <div class="update-nav-row-head">
+        {% if link.is_locked %}
+        <span class="update-pill update-pill-featured">
+          <i class="fa-solid fa-lock"></i> LOCKED
+        </span>
+        {% else %}
+        <span class="update-pill update-pill-category">
+          <i class="fa-solid fa-pen"></i> EDITABLE
+        </span>
+        {% endif %}
+        <span class="update-nav-order">#{{ link.sort_order }}</span>
+      </div>
+
+      <form method="POST" action="{{ url_for('update_nav_edit', lid=link.id) }}"
+            class="update-inline-form update-nav-form">
+
+        <div class="update-field">
+          <label>Label</label>
+          <input type="text" name="label" value="{{ link.label }}"
+                 {% if link.is_locked %}disabled{% endif %} required>
+        </div>
+
+        <div class="update-field">
+          <label>URL</label>
+          <input type="text" name="url" value="{{ link.url }}"
+                 {% if link.is_locked %}disabled{% endif %} required>
+        </div>
+
+        <div class="update-field update-field-sm">
+          <label>Order</label>
+          <input type="number" name="sort_order" value="{{ link.sort_order }}"
+                 {% if link.is_locked %}disabled{% endif %} min="0">
+        </div>
+
+        {% if not link.is_locked %}
+        <button type="submit" class="update-btn update-btn-primary">
+          <i class="fa-solid fa-check"></i> Save
+        </button>
+        {% endif %}
+      </form>
+
+      {% if not link.is_locked %}
+      <form method="POST" action="{{ url_for('update_nav_delete', lid=link.id) }}"
+            onsubmit="return confirm('Delete this nav link?');"
+            class="update-nav-delete">
+        <button type="submit" class="update-btn update-btn-danger update-btn-sm">
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      </form>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

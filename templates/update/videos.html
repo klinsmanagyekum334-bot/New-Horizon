@@ -1,0 +1,135 @@
+{% extends "update/base_update.html" %}
+{% block title %}Videos — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Videos</h1>
+    <p class="update-page-sub">
+      {{ videos|length }} of {{ max_videos }} videos · Max {{ max_mb }}MB each
+    </p>
+  </div>
+</div>
+
+<!-- Upload form -->
+{% if videos|length < max_videos %}
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload New Video</h2>
+
+  <form method="POST" action="{{ url_for('update_video_upload') }}"
+        enctype="multipart/form-data"
+        class="update-form">
+
+    <div class="update-form-grid">
+
+      <div class="update-field full">
+        <label for="video_file">Video File * (Max {{ max_mb }}MB)</label>
+        <input type="file" id="video_file" name="video_file"
+               accept="video/mp4,video/webm,video/quicktime" required>
+        <p class="update-hint">Recommended: MP4 format.</p>
+      </div>
+
+      <div class="update-field full">
+        <label for="title">Title *</label>
+        <input type="text" id="title" name="title" placeholder="e.g. New Horizon Showreel" required>
+      </div>
+
+      <div class="update-field full">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="2"
+                  placeholder="Short description of the video"></textarea>
+      </div>
+
+      <div class="update-field full update-checkbox-field">
+        <label class="update-checkbox">
+          <input type="checkbox" name="is_featured">
+          <span>Set as the featured video (shown on the homepage)</span>
+        </label>
+      </div>
+
+    </div>
+
+    <div class="update-form-actions">
+      <button type="submit" class="update-btn update-btn-primary">
+        <i class="fa-solid fa-upload"></i> Upload Video
+      </button>
+    </div>
+  </form>
+</div>
+{% else %}
+<div class="update-panel update-panel-warn">
+  <i class="fa-solid fa-triangle-exclamation"></i>
+  <p>You've reached the maximum of {{ max_videos }} videos. Delete one before adding a new one.</p>
+</div>
+{% endif %}
+
+<!-- Existing videos -->
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-film"></i> Existing Videos ({{ videos|length }})</h2>
+
+  {% if videos %}
+  <div class="update-videos-list">
+
+    {% for v in videos %}
+    <div class="update-video-item">
+
+      <div class="update-video-preview">
+        {% if v.filename %}
+          <video preload="metadata" muted>
+            <!-- Supabase migration: full URL, no /static prefix -->
+            <source src="{{ v.filename }}" type="video/mp4">
+          </video>
+        {% else %}
+          <div style="padding: 30px 10px; text-align: center; background: #f1f3f5; color: #868e96; font-size: 12px; border-radius: 4px;">
+            No file uploaded
+          </div>
+        {% endif %}
+        
+        {% if v.is_featured %}
+        <span class="update-video-badge">FEATURED</span>
+        {% endif %}
+      </div>
+
+      <div class="update-video-body">
+        <form method="POST" action="{{ url_for('update_video_edit', vid=v.id) }}" class="update-video-form">
+          <div class="update-field">
+            <label>Title</label>
+            <input type="text" name="title" value="{{ v.title }}" required>
+          </div>
+
+          <div class="update-field">
+            <label>Description</label>
+            <textarea name="description" rows="2">{{ v.description or '' }}</textarea>
+          </div>
+
+          <div class="update-video-actions">
+            <label class="update-checkbox update-checkbox-inline">
+              <input type="checkbox" name="is_featured" {% if v.is_featured %}checked{% endif %}>
+              <span>Featured</span>
+            </label>
+            <button type="submit" class="update-btn update-btn-primary update-btn-sm">
+              <i class="fa-solid fa-check"></i> Save
+            </button>
+          </div>
+        </form>
+
+        <form method="POST" action="{{ url_for('update_video_delete', vid=v.id) }}"
+              onsubmit="return confirm('Delete this video?');"
+              class="update-video-delete">
+          <button type="submit" class="update-btn update-btn-danger update-btn-sm">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </form>
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+  {% else %}
+  <p class="update-empty-text">No videos uploaded yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

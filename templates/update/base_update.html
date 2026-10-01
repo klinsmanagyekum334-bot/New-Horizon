@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Update — {{ site.brand_name or "New Horizon" }}{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/update.css') }}">
+</head>
+<body class="update-body">
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="update-sidebar">
+
+  <a href="{{ url_for('update_dashboard') }}" class="update-logo">
+    <img src="{{ site.logo_path or url_for('static', filename='img/logo1.jpg') }}"
+         alt="Logo"
+         class="update-logo-img">
+    <div class="update-logo-text">
+      <span>NEW <strong>HORIZON</strong></span>
+      <small>Control Panel</small>
+    </div>
+  </a>
+
+  <nav class="update-nav">
+
+    <a href="{{ url_for('update_dashboard') }}"
+       class="{% if request.endpoint == 'update_dashboard' %}active{% endif %}">
+      <i class="fa-solid fa-gauge-high"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <div class="update-nav-group">Content</div>
+
+    <a href="{{ url_for('update_site') }}"
+       class="{% if request.endpoint == 'update_site' %}active{% endif %}">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>Site Content</span>
+    </a>
+
+    <a href="{{ url_for('update_projects') }}"
+       class="{% if request.endpoint and request.endpoint.startswith('update_project') %}active{% endif %}">
+      <i class="fa-solid fa-building"></i>
+      <span>Projects</span>
+    </a>
+
+    <a href="{{ url_for('update_videos') }}"
+       class="{% if request.endpoint and request.endpoint.startswith('update_video') %}active{% endif %}">
+      <i class="fa-solid fa-video"></i>
+      <span>Videos</span>
+    </a>
+
+    <a href="{{ url_for('update_gallery') }}"
+       class="{% if request.endpoint and request.endpoint.startswith('update_gallery') %}active{% endif %}">
+      <i class="fa-solid fa-images"></i>
+      <span>Gallery</span>
+    </a>
+
+    <a href="{{ url_for('update_nav') }}"
+       class="{% if request.endpoint and request.endpoint.startswith('update_nav') %}active{% endif %}">
+      <i class="fa-solid fa-bars"></i>
+      <span>Navigation</span>
+    </a>
+
+    <div class="update-nav-group">Messages</div>
+
+    <a href="{{ url_for('update_inquiries') }}"
+       class="{% if request.endpoint and request.endpoint.startswith('update_inquir') %}active{% endif %}">
+      <i class="fa-solid fa-envelope-open-text"></i>
+      <span>Inquiries</span>
+    </a>
+
+  </nav>
+
+  <div class="update-sidebar-footer">
+    <a href="{{ url_for('index') }}" target="_blank">
+      <i class="fa-solid fa-eye"></i> View Site
+    </a>
+    <a href="{{ url_for('update_logout') }}" class="logout">
+      <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
+  </div>
+
+</aside>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main class="update-main">
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in msgs %}
+      <div class="update-flash update-flash-{{ cat }}">
+        <i class="fa-solid {% if cat == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}{{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="{{ site.hero_image or url_for('static', filename='uploads/image1.jpg') }}"
+         alt="Modern real estate development">
+  </div>
+
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content-wrap">
+    <div class="hero-content">
+
+      <h1 class="hero-title">
+        <span class="hl-yellow">{{ site.hero_title_l1 or "Plan" }}</span><br>
+        {{ site.hero_title_l2 or "A perfect" }}<br>
+        {{ site.hero_title_l3 or "Home for" }}<br>
+        Your <span class="hl-yellow">{{ site.hero_title_l4 or "family" }}</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        {{ site.hero_subtitle or "Most trusted Agency in Ghana" }}
+      </p>
+
+      <div class="hero-buttons">
+        <a href="{{ url_for('projects') }}" class="btn-primary">
+          {{ site.hero_cta_text or "Explore Projects" }} <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     OUR SERVICES STRIP
+     ============================================================ -->
+<section class="services-strip">
+  <div class="container">
+    <div class="services-strip-inner">
+
+      <span class="services-title">{{ site.services_heading or "[ Our Services ]" }}</span>
+
+      {% set services_list = (site.services_items or "").split('\n') %}
+      {% for item in services_list %}
+        {% if item.strip() %}
+          <span class="services-arrow">>></span>
+          <span class="services-item {% if loop.last %}services-item-highlight{% endif %}">
+            {{ item.strip() }}
+          </span>
+        {% endif %}
+      {% endfor %}
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     VIDEO SECTION
+     ============================================================ -->
+<section class="video-section">
+  <div class="container">
+
+    <div class="section-head-center">
+      <h2 class="section-title">{{ site.video_section_heading or "Watch Our Story" }}</h2>
+      <p class="section-subtitle">
+        {{ site.video_section_subheading or "See our developments come to life." }}
+      </p>
+    </div>
+
+    <div class="video-card">
+      {# 
+        Supabase migration: 
+        The filename field now contains the full public URL from Supabase Storage.
+        We no longer prefix it with /static/videos/.
+      #}
+      {% set video_src = featured_video.filename if featured_video and featured_video.filename else '' %}
+
+      {% if video_src %}
+        <video
+          class="video-player"
+          controls
+          preload="metadata"
+          poster="{{ site.hero_image or url_for('static', filename='uploads/image1.jpg') }}">
+          <source src="{{ video_src }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+
+        <div class="video-overlay-bar">
+          <div class="video-meta">
+            <h3>{{ featured_video.title if featured_video else "New Horizon Showreel" }}</h3>
+            <p>{{ featured_video.description if featured_video and featured_video.description else "A glimpse into our latest residential and commercial developments." }}</p>
+          </div>
+          <a href="{{ url_for('videos_page') }}" class="video-more-btn">
+            More Videos <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      {% else %}
+        <div class="video-placeholder" style="padding: 60px 20px; text-align: center; background: #f8f9fa; border-radius: 12px; border: 1px dashed #ccc;">
+          <i class="fa-solid fa-video-slash" style="font-size: 2.5rem; color: #adb5bd; margin-bottom: 15px; display: block;"></i>
+          <h3 style="color: #495057; margin-bottom: 8px;">No Video Uploaded Yet</h3>
+          <p style="color: #6c757d;">Go to the admin panel to upload a showreel or featured video.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     CAROUSEL
+     ============================================================ -->
+{% if carousel_projects %}
+<section class="carousel-section">
+  <div class="container">
+
+    <div class="carousel-wrap">
+      <button class="carousel-arrow carousel-prev" aria-label="Previous" id="carouselPrev">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <div class="carousel-track" id="carouselTrack">
+
+        {% for p in carousel_projects %}
+        <article class="project-card carousel-card">
+          <a href="{{ url_for('project_detail', slug=p.slug) }}" class="carousel-card-link">
+
+            <div class="project-image">
+              <span class="project-badge badge-{{ p.status }}">
+                {{ p.status | replace('-', ' ') | title }}
+              </span>
+              <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
+                   alt="{{ p.name }}">
+            </div>
+
+            <div class="carousel-body">
+              <h3 class="carousel-title">{{ p.name }}</h3>
+              <p class="carousel-price">${{ "{:,}".format(p.price_from|int) }}</p>
+            </div>
+
+          </a>
+        </article>
+        {% endfor %}
+
+        <a href="{{ url_for('projects') }}" class="project-card carousel-more-card">
+          <div class="more-card-inner">
+            <i class="fa-solid fa-arrow-right"></i>
+            <h3>More</h3>
+          </div>
+        </a>
+
+      </div>
+
+      <button class="carousel-arrow carousel-next" aria-label="Next" id="carouselNext">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
+  </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
+     FULL GRID
+     ============================================================ -->
+{% if grid_projects %}
+<section class="section section-white">
+  <div class="container">
+
+    <div class="projects-grid">
+      {% for p in grid_projects %}
+      <article class="project-card">
+
+        <div class="project-image">
+          <span class="project-badge badge-{{ p.status }}">
+            {{ p.category | capitalize }} • {{ p.status | replace('-', ' ') | title }}
+          </span>
+          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
+               alt="{{ p.name }}">
+        </div>
+
+        <div class="project-body">
+          <h3 class="project-name">{{ p.name }}</h3>
+          <p class="project-desc">{{ p.short_desc }}</p>
+
+          <div class="project-meta">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>{{ p.location }}{% if p.units %} • {{ p.units }}{% endif %}</span>
+          </div>
+
+          <div class="project-footer">
+            <div class="project-price">
+              <span class="label">From</span>
+              <span class="value">${{ "{:,}".format(p.price_from|int) }}</span>
+            </div>
+            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="project-learn">
+              Learn More <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
+     CONTACT + LOCATION
+     ============================================================ -->
+<section class="contact-section" id="contact-section">
+  <div class="container">
+
+    <div class="contact-section-head">
+      <span class="contact-eyebrow">GET IN TOUCH</span>
+      <h2 class="contact-section-title">{{ site.contact_heading or "Contact Us" }}</h2>
+      <p class="contact-section-sub">
+        {{ site.contact_subheading or "We're here to help — reach out anytime." }}
+      </p>
+    </div>
+
+    <div class="contact-cards">
+
+      <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}" class="contact-card">
+        <div class="contact-card-icon">
+          <i class="fa-solid fa-envelope"></i>
+        </div>
+        <h3>Email</h3>
+        <p>{{ site.contact_email or "info@newhorizongh.com" }}</p>
+        <span class="contact-card-action">Tap to send email <i class="fa-solid fa-arrow-right"></i></span>
+      </a>
+
+      <a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}?text={{ 'Hello New Horizon! I would like to make an enquiry.' | urlencode }}"
+         target="_blank" class="contact-card contact-card-wa">
+        <div class="contact-card-icon">
+          <i class="fa-brands fa-whatsapp"></i>
+        </div>
+        <h3>WhatsApp</h3>
+        <p>{{ site.contact_phone_display or "+233 24 344 4343" }}</p>
+        <span class="contact-card-action">Tap to chat now <i class="fa-solid fa-arrow-right"></i></span>
+      </a>
+
+      <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}" class="contact-card">
+        <div class="contact-card-icon">
+          <i class="fa-solid fa-phone"></i>
+        </div>
+        <h3>Call</h3>
+        <p>{{ site.contact_phone_display or "+233 24 344 4343" }}</p>
+        <span class="contact-card-action">Tap to dial <i class="fa-solid fa-arrow-right"></i></span>
+      </a>
+
+    </div>
+
+    <div class="location-card">
+      <div class="location-card-icon">
+        <i class="fa-solid fa-location-dot"></i>
+      </div>
+      <div class="location-card-body">
+        <h3>{{ site.location_heading or "Our Location" }}</h3>
+        <p>{{ site.location_address or "Tema Community 25, Ghana" }}</p>
+        <a href="{{ site.location_maps_url or 'https://www.google.com/maps/search/?api=1&query=Tema+Community+25+Ghana' }}"
+           target="_blank"
+           class="location-map-btn">
+          <i class="fa-solid fa-map-location-dot"></i> Open in Google Maps
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA BAND
+     ============================================================ -->
+<section class="section">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-text">
+        <h3>Ready to find your next home or business space?</h3>
+        <p>Book a free consultation with our team and let's bring your vision to life.</p>
+      </div>
+      <a href="{{ url_for('book') }}" class="btn-primary">
+        <i class="fa-solid fa-phone"></i> Book Consultation
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

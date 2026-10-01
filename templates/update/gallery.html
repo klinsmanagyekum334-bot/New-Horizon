@@ -1,0 +1,96 @@
+{% extends "update/base_update.html" %}
+{% block title %}Gallery — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Gallery</h1>
+    <p class="update-page-sub">
+      Upload your own images. Project images appear here automatically.
+    </p>
+  </div>
+</div>
+
+<!-- Upload -->
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload New Image</h2>
+
+  <form method="POST" action="{{ url_for('update_gallery_upload') }}"
+        enctype="multipart/form-data" class="update-form">
+
+    <div class="update-form-grid">
+      <div class="update-field full">
+        <label for="image">Image File * (Max 5MB)</label>
+        <input type="file" id="image" name="image" accept="image/*" required>
+      </div>
+
+      <div class="update-field full">
+        <label for="title">Title (optional)</label>
+        <input type="text" id="title" name="title" placeholder="e.g. Tema Eco Townhomes exterior">
+      </div>
+    </div>
+
+    <div class="update-form-actions">
+      <button type="submit" class="update-btn update-btn-primary">
+        <i class="fa-solid fa-upload"></i> Upload Image
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Existing uploaded images -->
+<div class="update-panel">
+  <h2 class="update-panel-title">
+    <i class="fa-solid fa-images"></i> Your Uploaded Images
+  </h2>
+
+  {% set uploaded = images | selectattr("source", "equalto", "upload") | list %}
+  {% if uploaded %}
+  <div class="update-gallery-grid">
+    {% for img in uploaded %}
+    <div class="update-gallery-tile">
+      <img src="{{ img.src }}" alt="{{ img.title }}">
+      <div class="update-gallery-info">
+        <p>{{ img.title or "(no title)" }}</p>
+      </div>
+      <form method="POST" action="{{ url_for('update_gallery_delete', img_id=img.db_id) }}"
+            onsubmit="return confirm('Delete this image?');">
+        <button type="submit" class="update-gallery-delete" title="Delete">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="update-empty-text">No images uploaded yet.</p>
+  {% endif %}
+</div>
+
+<!-- Project images -->
+<div class="update-panel">
+  <h2 class="update-panel-title">
+    <i class="fa-solid fa-building"></i> Project Images (auto)
+  </h2>
+  <p class="update-hint">These come automatically from your projects. To change them, edit the project.</p>
+
+  {% set project_imgs = images | selectattr("source", "equalto", "project") | list %}
+  {% if project_imgs %}
+  <div class="update-gallery-grid">
+    {% for img in project_imgs %}
+    <div class="update-gallery-tile update-gallery-tile-auto">
+      <img src="{{ img.src }}" alt="{{ img.title }}">
+      <div class="update-gallery-info">
+        <p>{{ img.title }}</p>
+      </div>
+      <span class="update-gallery-auto-tag">Project</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="update-empty-text">No project images yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

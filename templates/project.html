@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% if active_category == "residential" %}
+  {% set page_heading = "Residential Projects" %}
+  {% set page_sub = "Family homes, villas and townhomes designed for modern living across Ghana." %}
+{% elif active_category == "commercial" %}
+  {% set page_heading = "Commercial Projects" %}
+  {% set page_sub = "Premium office spaces, retail units and mixed-use developments for forward-thinking businesses." %}
+{% else %}
+  {% set page_heading = "Our Projects" %}
+  {% set page_sub = "Explore our full portfolio of residential and commercial developments across Ghana." %}
+{% endif %}
+
+{% block title %}{{ page_heading }} — {{ site.brand_name or "EstateDev" }}{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     PAGE HEADER
+     ============================================================ -->
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-header-title">{{ page_heading }}</h1>
+    <p class="page-header-sub">{{ page_sub }}</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     FILTER TABS
+     ============================================================ -->
+<section class="projects-filter-section">
+  <div class="container">
+    <div class="filter-tabs">
+
+      <a href="{{ url_for('projects') }}"
+         class="filter-tab {% if not active_category %}active{% endif %}">
+        <i class="fa-solid fa-border-all"></i> All Projects
+      </a>
+
+      <a href="{{ url_for('residentials') }}"
+         class="filter-tab {% if active_category == 'residential' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i> Residentials
+      </a>
+
+      <a href="{{ url_for('commercial') }}"
+         class="filter-tab {% if active_category == 'commercial' %}active{% endif %}">
+        <i class="fa-solid fa-building"></i> Commercial
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PROJECTS GRID
+     ============================================================ -->
+<section class="section section-soft">
+  <div class="container">
+
+    {% if projects %}
+
+    <div class="projects-grid">
+
+      {% for p in projects %}
+      <article class="project-card">
+
+        <div class="project-image">
+          <span class="project-badge badge-{{ p.status }}">
+            {{ p.category | capitalize }} • {{ p.status | replace('-', ' ') | title }}
+          </span>
+          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
+               alt="{{ p.name }}">
+        </div>
+
+        <div class="project-body">
+          <h3 class="project-name">{{ p.name }}</h3>
+          <p class="project-desc">{{ p.short_desc }}</p>
+
+          <div class="project-meta">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>{{ p.location }}{% if p.units %} • {{ p.units }}{% endif %}</span>
+          </div>
+
+          <div class="project-footer">
+            <div class="project-price">
+              <span class="label">From</span>
+              <span class="value">${{ "{:,}".format(p.price_from) }}</span>
+            </div>
+            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="project-learn">
+              Learn More <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+      <i class="fa-solid fa-building"></i>
+      <h3>No projects yet</h3>
+      <p>
+        {% if active_category %}
+          There are no {{ active_category }} projects at the moment.
+          <a href="{{ url_for('projects') }}" style="color:var(--teal);font-weight:600;">View all projects →</a>
+        {% else %}
+          Projects will appear here once the admin adds them.
+        {% endif %}
+      </p>
+    </div>
+
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA BAND
+     ============================================================ -->
+<section class="section">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-text">
+        <h3>Interested in one of our developments?</h3>
+        <p>Get in touch with our team to schedule a site visit or request the full brochure.</p>
+      </div>
+      <a href="{{ url_for('contact') }}" class="btn-primary">
+        <i class="fa-solid fa-envelope"></i> Contact Us
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

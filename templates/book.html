@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Book a Consultation — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-header-title">Book a Consultation</h1>
+    <p class="page-header-sub">
+      Sit down with our property experts — free of charge. We'll help you find the
+      perfect home or commercial space for your needs.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container book-layout">
+
+    <aside class="book-side">
+      <h2 class="book-side-heading">What to Expect</h2>
+
+      <ul class="book-benefits">
+        <li>
+          <div class="benefit-icon"><i class="fa-solid fa-comments"></i></div>
+          <div>
+            <h3>Personalised Advice</h3>
+            <p>Tell us what you're looking for and we'll match you with the right project.</p>
+          </div>
+        </li>
+        <li>
+          <div class="benefit-icon"><i class="fa-solid fa-file-lines"></i></div>
+          <div>
+            <h3>Full Project Details</h3>
+            <p>Get brochures, floor plans, pricing and availability for every property we discuss.</p>
+          </div>
+        </li>
+        <li>
+          <div class="benefit-icon"><i class="fa-solid fa-eye"></i></div>
+          <div>
+            <h3>Site Visits</h3>
+            <p>We'll arrange tours of any site you're interested in — no commitment required.</p>
+          </div>
+        </li>
+        <li>
+          <div class="benefit-icon"><i class="fa-solid fa-handshake"></i></div>
+          <div>
+            <h3>No Obligation</h3>
+            <p>The consultation is completely free. Walk away if it's not the right fit.</p>
+          </div>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="book-form-wrap">
+      <h2 class="book-form-heading">Request Your Consultation</h2>
+      <p class="book-form-sub">
+        Fill in your details below and tap <strong>Send on WhatsApp</strong> — we'll
+        reach out within 24 hours to confirm.
+      </p>
+
+      <form method="POST" action="{{ url_for('book') }}" class="book-form" id="bookForm">
+
+        <div class="form-group">
+          <label for="name">Full Name *</label>
+          <input type="text" id="name" name="name"
+                 placeholder="e.g. Kwame Mensah" required maxlength="80">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email"
+                   placeholder="you@example.com" maxlength="120">
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="text" id="phone" name="phone"
+                   placeholder="e.g. 055 123 4567" maxlength="30">
+          </div>
+        </div>
+
+        <p class="form-hint">Please provide at least one — email or phone.</p>
+
+        <div class="form-group">
+          <label for="preferred_date">Preferred Date</label>
+          <input type="date" id="preferred_date" name="preferred_date">
+        </div>
+
+        <div class="form-group">
+          <label for="message">What are you looking for?</label>
+          <textarea id="message" name="message" rows="5"
+                    placeholder="Tell us about the property you're interested in, your budget, timeline, or any other details..."
+                    maxlength="2000"></textarea>
+        </div>
+
+        <button type="submit" class="form-submit">
+          <i class="fa-brands fa-whatsapp"></i> Send on WhatsApp
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<section class="section section-soft">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-text">
+        <h3>Prefer to just send a message?</h3>
+        <p>Reach out through our contact page and we'll respond within 24 hours.</p>
+      </div>
+      <a href="{{ url_for('contact') }}" class="btn-primary">
+        <i class="fa-solid fa-envelope"></i> Contact Us
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     WHATSAPP SUBMIT HANDLER — sends form details to WhatsApp
+     ============================================================ -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("bookForm");
+    if (!form) return;
+
+    // WhatsApp number — the one ending in 43
+    const WHATSAPP_NUMBER = "233243444343";
+
+    form.addEventListener("submit", (e) => {
+      const name    = (document.getElementById("name")?.value || "").trim();
+      const email   = (document.getElementById("email")?.value || "").trim();
+      const phone   = (document.getElementById("phone")?.value || "").trim();
+      const date    = (document.getElementById("preferred_date")?.value || "").trim();
+      const message = (document.getElementById("message")?.value || "").trim();
+
+      // Build the WhatsApp message
+      let text = `Hello New Horizon Coopers Limited,\n\n`;
+      text += `I would like to book a consultation.\n\n`;
+      text += `*Name:* ${name}`;
+      if (email)   text += `\n*Email:* ${email}`;
+      if (phone)   text += `\n*Phone:* ${phone}`;
+      if (date)    text += `\n*Preferred Date:* ${date}`;
+      if (message) text += `\n\n*Message:*\n${message}`;
+
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+
+      // Open WhatsApp in a new tab
+      window.open(url, "_blank");
+
+      // Form continues submitting normally so it also saves to DB
+    });
+  });
+</script>
+
+{% endblock %}

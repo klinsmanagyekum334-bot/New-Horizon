@@ -1,0 +1,97 @@
+{% extends "update/base_update.html" %}
+{% block title %}Projects — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Projects</h1>
+    <p class="update-page-sub">{{ projects|length }} project{{ 's' if projects|length != 1 }} in the catalog.</p>
+  </div>
+  <a href="{{ url_for('update_project_new') }}" class="update-btn update-btn-primary">
+    <i class="fa-solid fa-plus"></i> Add Project
+  </a>
+</div>
+
+{% if projects %}
+
+<div class="update-table-wrap">
+  <table class="update-table">
+    <thead>
+      <tr>
+        <th style="width:70px;">Image</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Location</th>
+        <th>Price</th>
+        <th style="width:90px;">Featured</th>
+        <th style="width:120px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in projects %}
+      <tr>
+        <td>
+          <div class="update-thumb">
+            <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/80/80' }}"
+                 alt="{{ p.name }}">
+          </div>
+        </td>
+        <td>
+          <div class="update-cell-title">{{ p.name }}</div>
+          <div class="update-cell-sub">/{{ p.slug }}</div>
+        </td>
+        <td>
+          <span class="update-pill update-pill-{{ p.category }}">
+            {{ p.category | capitalize }}
+          </span>
+        </td>
+        <td>{{ p.location or "—" }}</td>
+        <td>
+          <strong class="update-price">${{ "{:,}".format(p.price_from|int) }}</strong>
+        </td>
+        <td>
+          {% if p.featured %}
+          <span class="update-pill update-pill-featured">
+            <i class="fa-solid fa-star"></i> Yes
+          </span>
+          {% else %}
+          <span class="update-pill update-pill-muted">No</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="update-row-actions">
+            <a href="{{ url_for('update_project_edit', pid=p.id) }}"
+               class="update-icon-btn" title="Edit">
+              <i class="fa-solid fa-pen"></i>
+            </a>
+            <form method="POST"
+                  action="{{ url_for('update_project_delete', pid=p.id) }}"
+                  onsubmit="return confirm('Delete this project?');"
+                  style="display:inline;">
+              <button type="submit" class="update-icon-btn update-icon-danger" title="Delete">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+
+<div class="update-empty">
+  <i class="fa-solid fa-building"></i>
+  <h3>No projects yet</h3>
+  <p>Click <strong>Add Project</strong> to create your first one.</p>
+  <a href="{{ url_for('update_project_new') }}" class="update-btn update-btn-primary">
+    <i class="fa-solid fa-plus"></i> Add Project
+  </a>
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "update/base_update.html" %}
+{% block title %}Site Content — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Site Content</h1>
+    <p class="update-page-sub">Edit every text and image shown on the site.</p>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('update_site') }}" enctype="multipart/form-data">
+
+  {% for sec in schema %}
+  <div class="update-panel">
+
+    <h2 class="update-panel-title">
+      <i class="{{ sec.icon }}"></i> {{ sec.section }}
+    </h2>
+
+    <div class="update-form-grid">
+
+      {% for field in sec.fields %}
+
+        {% if field.type == "text" %}
+        <div class="update-field {% if field.key == 'services_items' %}full{% endif %}">
+          <label for="{{ field.key }}">{{ field.label }}</label>
+          <input type="text" id="{{ field.key }}" name="{{ field.key }}"
+                 value="{{ site.get(field.key, field.default) }}">
+        </div>
+
+        {% elif field.type == "textarea" %}
+        <div class="update-field full">
+          <label for="{{ field.key }}">{{ field.label }}</label>
+          <textarea id="{{ field.key }}" name="{{ field.key }}" rows="5">{{ site.get(field.key, field.default) }}</textarea>
+        </div>
+
+        {% elif field.type == "image" %}
+        <div class="update-field full update-image-field">
+          <label>{{ field.label }}</label>
+
+          <div class="update-image-row">
+            <div class="update-image-preview">
+              <img src="{{ site.get(field.key, field.default) }}" alt="Preview" id="preview_{{ field.key }}">
+            </div>
+
+            <div class="update-image-controls">
+              <div class="update-image-actions">
+                <label for="file_{{ field.key }}" class="update-btn update-btn-secondary update-upload-btn">
+                  <i class="fa-solid fa-folder-open"></i> Choose from Gallery
+                </label>
+                <input type="file" id="file_{{ field.key }}" name="file_{{ field.key }}"
+                       accept="image/*" hidden
+                       onchange="previewFile(this, 'preview_{{ field.key }}')">
+
+                <label for="camera_{{ field.key }}" class="update-btn update-btn-secondary update-upload-btn">
+                  <i class="fa-solid fa-camera"></i> Take Photo
+                </label>
+                <input type="file" id="camera_{{ field.key }}" name="file_{{ field.key }}"
+                       accept="image/*" capture="environment" hidden
+                       onchange="previewFile(this, 'preview_{{ field.key }}')">
+              </div>
+
+              <div class="update-field">
+                <label for="url_{{ field.key }}">…or paste image URL</label>
+                <input type="text" id="url_{{ field.key }}" name="url_{{ field.key }}"
+                       placeholder="https://..."
+                       value="{% if not site.get(field.key, field.default).startswith('/static/') %}{{ site.get(field.key, field.default) }}{% endif %}"
+                       oninput="previewUrl(this, 'preview_{{ field.key }}')">
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+  {% endfor %}
+
+  <div class="update-form-actions">
+    <button type="submit" class="update-btn update-btn-primary">
+      <i class="fa-solid fa-check"></i> Save All Changes
+    </button>
+  </div>
+
+</form>
+
+<script>
+  function previewFile(input, targetId) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById(targetId).src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+  function previewUrl(input, targetId) {
+    const v = input.value.trim();
+    if (v) document.getElementById(targetId).src = v;
+  }
+</script>
+
+{% endblock %}

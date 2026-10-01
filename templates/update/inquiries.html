@@ -1,0 +1,65 @@
+{% extends "update/base_update.html" %}
+{% block title %}Inquiries — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Inquiries</h1>
+    <p class="update-page-sub">
+      {{ inquiries|length }} message{{ 's' if inquiries|length != 1 }} received.
+    </p>
+  </div>
+</div>
+
+{% if inquiries %}
+
+<div class="update-inquiries-list">
+
+  {% for i in inquiries %}
+  <div class="update-inquiry">
+
+    <div class="update-inquiry-head">
+      <div>
+        <span class="update-pill update-pill-category">
+          {% if i.kind == "contact" %}Contact{% else %}Booking{% endif %}
+        </span>
+        <strong class="update-inquiry-name">{{ i.name }}</strong>
+      </div>
+      <span class="update-inquiry-date">{{ i.created_at }}</span>
+    </div>
+
+    <div class="update-inquiry-body">
+      <p>
+        {% if i.email %}<i class="fa-solid fa-envelope"></i> {{ i.email }} &nbsp;{% endif %}
+        {% if i.phone %}<i class="fa-solid fa-phone"></i> {{ i.phone }} &nbsp;{% endif %}
+        {% if i.preferred_date %}<i class="fa-solid fa-calendar"></i> {{ i.preferred_date }}{% endif %}
+      </p>
+      {% if i.subject %}<p><strong>Subject:</strong> {{ i.subject }}</p>{% endif %}
+      {% if i.message %}<p class="update-inquiry-message">{{ i.message }}</p>{% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('update_inquiry_delete', iid=i.id) }}"
+          onsubmit="return confirm('Delete this inquiry?');"
+          class="update-inquiry-delete">
+      <button type="submit" class="update-btn update-btn-danger update-btn-sm">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+    </form>
+
+  </div>
+  {% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="update-empty">
+  <i class="fa-solid fa-envelope-open"></i>
+  <h3>No inquiries yet</h3>
+  <p>Messages from the contact and booking forms will appear here.</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

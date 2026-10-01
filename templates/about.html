@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}About Us — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     PAGE HEADER
+     ============================================================ -->
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-header-title">About Us</h1>
+    <p class="page-header-sub">
+      New Horizon Coopers Limited — building trust, delivering value since 2017.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================
+     COMPANY STORY
+     ============================================================ -->
+<section class="section section-white">
+  <div class="container">
+    <div class="about-story-content about-content-narrow">
+
+      <span class="about-eyebrow">WHO WE ARE</span>
+
+      <h2 class="about-heading">
+        A household name in Pharmaceuticals &amp; Real Estate
+      </h2>
+
+      <p class="about-text">
+        New Horizon Coopers Limited is a company incorporated under the laws of Ghana in 2017 to
+        undertake a variety of businesses including Import and Export, Dealership in Pharmaceutical
+        Products, Real Estate Development and General Construction works — with a vision to become
+        a household name in Pharmaceuticals and Real Estates in Ghana and beyond.
+      </p>
+
+      <p class="about-text">
+        We are a reference in the high-profile Real Estate Consulting sector that addresses
+        international markets and customers from all over the world. Through many years of
+        experience, a team of shrewd professionals with transversal skills has been assembled to
+        lead the Company and accompany our customers in every phase of the process — to establish
+        a beneficial and mutual relationship of trust and transparency.
+      </p>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PROFESSIONAL APPROACH
+     ============================================================ -->
+<section class="section">
+  <div class="container">
+    <div class="about-story-content about-content-narrow">
+
+      <span class="about-eyebrow">OUR APPROACH</span>
+
+      <h2 class="about-heading">
+        Every property has its own personality
+      </h2>
+
+      <p class="about-text">
+        Each property has its own personality and history of value that must be acknowledged and
+        transferred. Through an in-depth analysis of real estate assets, constant updating on
+        industry scenarios, and assessment of the best investment opportunities — our consultancy
+        is positioned at par with the highest market standard.
+      </p>
+
+      <p class="about-text">
+        Besides competence, it is the ability to create a strong connection with the customer that
+        has always distinguished us. The customers who have chosen us — and continue to do so —
+        know they can count on undisputed confidentiality and on an optimal exploitation of their
+        real estate assets.
+      </p>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     GET TO KNOW MORE — NEW HORIZON
+     ============================================================ -->
+<section class="section section-soft">
+  <div class="container">
+
+    <div class="section-head-center">
+      <span class="about-eyebrow">GET TO KNOW MORE</span>
+      <h2 class="section-title">New Horizon</h2>
+    </div>
+
+    <div class="about-story">
+      <div class="about-story-image">
+        <img src="https://picsum.photos/seed/newhorizon-about/1000/1000"
+             alt="New Horizon Estate">
+      </div>
+
+      <div class="about-story-content">
+        <p class="about-text">
+          Located in the heart of <strong>Tema Community 25</strong>, our gated estate offers a
+          seamless blend of luxury and everyday living. Every detail has been thoughtfully planned
+          to provide residents with a safe, vibrant, and well-connected environment.
+        </p>
+
+        <p class="about-text">
+          Whether you're a growing family, a professional seeking modern comfort, or an investor
+          looking for high-value real estate — New Horizon provides the perfect address.
+        </p>
+
+        <p class="about-text">
+          <strong>New Horizon</strong>, where modern architecture meets lifestyle excellence.
+          Explore luxury homes in a serene, master-planned gated community designed for comfort,
+          security, and convenience.
+        </p>
+
+        <a href="{{ url_for('projects') }}" class="btn-primary about-cta">
+          Explore Properties <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA BAND
+     ============================================================ -->
+<section class="section">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-text">
+        <h3>Want to work with us?</h3>
+        <p>Reach out for a free consultation — we'll help you find the right property or investment.</p>
+      </div>
+      <a href="{{ url_for('contact') }}" class="btn-primary">
+        <i class="fa-solid fa-envelope"></i> Contact Us
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
