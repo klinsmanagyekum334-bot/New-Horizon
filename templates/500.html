@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Server Error — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-header-title">500</h1>
+    <p class="page-header-sub">Something went wrong on our end.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="text-align:center; max-width:600px; margin:0 auto;">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size:4rem; color:#f59e0b; margin-bottom:20px;"></i>
+    <h2 style="margin-bottom:12px;">Server Error</h2>
+    <p style="color:#64748b; margin-bottom:24px;">
+      We're having a temporary issue. Please try again in a moment.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn-primary">
+      <i class="fa-solid fa-house"></i> Back to Home
+    </a>
+  </div>
+</section>
+{% endblock %}
