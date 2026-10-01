@@ -46,7 +46,7 @@ app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 # ============================================================
 # PRODUCTION SESSION & PROXY CONFIG (required for Render)
 # ============================================================
-app.config["SESSION_COOKIE_SECURE"]   = True
+#app.config["SESSION_COOKIE_SECURE"]   = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
