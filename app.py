@@ -3,6 +3,7 @@ import uuid
 from functools import wraps
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, flash, abort, jsonify
@@ -41,6 +42,19 @@ BUCKET_VIDEOS  = "nh-videos"
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
+
+# ============================================================
+# PRODUCTION SESSION & PROXY CONFIG (required for Render)
+# ============================================================
+app.config["SESSION_COOKIE_SECURE"]   = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Trust Render's reverse proxy so session cookies work correctly
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
