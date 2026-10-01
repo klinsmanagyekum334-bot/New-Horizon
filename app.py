@@ -38,9 +38,6 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
-# ============================================================
-# PRODUCTION SESSION & PROXY CONFIG
-# ============================================================
 app.config["SESSION_COOKIE_SECURE"]   = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -129,6 +126,84 @@ def get_schema_defaults():
         for f in sec["fields"]:
             out[f["key"]] = f["default"]
     return out
+
+
+# ============================================================
+# INIT — seed tables
+# ============================================================
+def seed_if_empty(table, rows):
+    try:
+        res = supabase.table(table).select("id").limit(1).execute()
+        if res.data:
+            return
+        supabase.table(table).insert(rows).execute()
+        print(f"[INIT] Seeded {table} with {len(rows)} rows")
+    except Exception as e:
+        print(f"seed {table} error:", e)
+
+
+def init_db():
+    # site_content
+    try:
+        res = supabase.table("nh_site_content").select("key").limit(1).execute()
+        if not res.data:
+            defaults = get_schema_defaults()
+            supabase.table("nh_site_content").insert(
+                [{"key": k, "value": v} for k, v in defaults.items()]
+            ).execute()
+            print("[INIT] Seeded nh_site_content")
+    except Exception as e:
+        print("seed site_content error:", e)
+
+    # nav
+    seed_if_empty("nh_nav_links", [
+        {"label": "Home",       "url": "/",         "sort_order": 1, "is_locked": True},
+        {"label": "About Us",   "url": "/about",    "sort_order": 2, "is_locked": False},
+        {"label": "Housing",    "url": "/projects", "sort_order": 3, "is_locked": False},
+        {"label": "Gallery",    "url": "/gallery",  "sort_order": 4, "is_locked": False},
+        {"label": "Contact Us", "url": "/contact",  "sort_order": 5, "is_locked": False},
+    ])
+
+    # projects
+    seed_if_empty("nh_projects", [
+        {"slug":"east-legon-villas","name":"East Legon Villas","category":"residential","status":"ongoing",
+         "short_desc":"Luxury gated villas with private gardens, modern amenities, and premium finishes.",
+         "long_desc":"East Legon Villas is an exclusive collection of modern luxury villas nestled in the heart of Accra.",
+         "location":"East Legon, Accra","units":"48 Villas","price_from":420000,
+         "image":"https://picsum.photos/seed/eastlegon/600/400",
+         "hero_image":"https://picsum.photos/seed/eastlegon/1600/900","featured":True,"sort_order":1},
+        {"slug":"tema-eco-townhomes","name":"Tema Eco Townhomes","category":"residential","status":"available",
+         "short_desc":"Eco-friendly townhouses surrounded by green spaces and community amenities.",
+         "long_desc":"Tema Eco Townhomes offers a new standard of sustainable family living.",
+         "location":"Tema, Greater Accra","units":"32 Townhomes","price_from":385000,
+         "image":"https://picsum.photos/seed/temaeco/600/400",
+         "hero_image":"https://picsum.photos/seed/temaeco/1600/900","featured":True,"sort_order":2},
+        {"slug":"airport-city-lofts","name":"Airport City Lofts","category":"commercial","status":"pre-launch",
+         "short_desc":"Modern commercial spaces with rooftop lounge and co-working areas.",
+         "long_desc":"Airport City Lofts is a landmark commercial development near Kotoka International Airport.",
+         "location":"Airport City, Accra","units":"12 Units","price_from":220000,
+         "image":"https://picsum.photos/seed/airportcity/600/400",
+         "hero_image":"https://picsum.photos/seed/airportcity/1600/900","featured":True,"sort_order":3},
+        {"slug":"kumasi-garden-estate","name":"Kumasi Garden Estate","category":"residential","status":"ongoing",
+         "short_desc":"Spacious family homes with lush gardens in Kumasi's fastest-growing suburb.",
+         "long_desc":"Kumasi Garden Estate is a master-planned community in Asokwa, Kumasi.",
+         "location":"Asokwa, Kumasi","units":"60 Homes","price_from":310000,
+         "image":"https://picsum.photos/seed/kumasigarden/600/400",
+         "hero_image":"https://picsum.photos/seed/kumasigarden/1600/900","featured":False,"sort_order":4},
+        {"slug":"takoradi-business-park","name":"Takoradi Business Park","category":"commercial","status":"available",
+         "short_desc":"Purpose-built commercial park for offices, retail, and light industry.",
+         "long_desc":"Takoradi Business Park is a mixed-use commercial development in Ghana's oil city.",
+         "location":"Takoradi, Western Region","units":"24 Units","price_from":195000,
+         "image":"https://picsum.photos/seed/takoradipark/600/400",
+         "hero_image":"https://picsum.photos/seed/takoradipark/1600/900","featured":False,"sort_order":5},
+    ])
+
+    # video placeholder
+    seed_if_empty("nh_videos", [
+        {"title":"New Horizon Showreel",
+         "description":"A glimpse into our latest developments across Ghana.",
+         "filename":"", "is_featured": True, "sort_order": 1}
+    ])
 
 
 # ============================================================
@@ -243,7 +318,6 @@ def fetch_gallery():
 
 
 def upload_to_bucket(file_storage, bucket, allowed_exts, max_bytes):
-    """Upload file to Supabase Storage. Returns public URL or None."""
     if not file_storage or not file_storage.filename:
         return None
     ext = file_storage.filename.rsplit(".", 1)[-1].lower()
@@ -283,8 +357,6 @@ def save_video(file_storage):
 
 # ============================================================
 # GLOBAL TEMPLATE CONTEXT
-# Makes `site` and `nav_links` available in EVERY template
-# (including all /update/* pages that were crashing with 500)
 # ============================================================
 @app.context_processor
 def inject_globals():
@@ -505,7 +577,7 @@ def api_search():
 def update_login():
     if request.method == "POST":
         pwd = request.form.get("password", "")
-        print(f"[LOGIN] POST received, pwd_len={len(pwd)}, match={pwd == ADMIN_PASSWORD}")
+        print(f"[LOGIN] POST pwd_len={len(pwd)}, match={pwd == ADMIN_PASSWORD}")
         if pwd == ADMIN_PASSWORD:
             session["admin_logged_in"] = True
             session.permanent = True
