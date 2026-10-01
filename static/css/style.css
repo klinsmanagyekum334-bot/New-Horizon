@@ -384,21 +384,24 @@ input, textarea, select { font-family: inherit; }
   height: 100%;
   object-fit: cover;
   object-position: right center;
-  filter: contrast(1.05) saturate(1.05);
+  /* Enhanced clarity: brighter, richer, higher contrast */
+  filter: contrast(1.10) saturate(1.20) brightness(1.06);
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
+  /* Dark only on the left ~25% (where text sits), then fades to fully clear.
+     Right 70%+ of the image is crystal clear. */
   background: linear-gradient(
     90deg,
-    rgba(10, 31, 51, 0.98) 0%,
-    rgba(10, 31, 51, 0.95) 30%,
-    rgba(10, 31, 51, 0.75) 45%,
-    rgba(10, 31, 51, 0.35) 60%,
-    rgba(10, 31, 51, 0.12) 78%,
-    rgba(10, 31, 51, 0.00) 90%,
+    rgba(10, 31, 51, 0.88) 0%,
+    rgba(10, 31, 51, 0.82) 12%,
+    rgba(10, 31, 51, 0.62) 22%,
+    rgba(10, 31, 51, 0.30) 32%,
+    rgba(10, 31, 51, 0.08) 44%,
+    rgba(10, 31, 51, 0.00) 56%,
     rgba(10, 31, 51, 0.00) 100%
   );
   pointer-events: none;
@@ -1835,7 +1838,7 @@ input, textarea, select { font-family: inherit; }
   .section-title { font-size: 24px; }
   .section-subtitle { font-size: 14px; }
 
-  /* HERO mobile */
+  /* HERO mobile — full-width text needs stronger overall overlay */
   .hero { min-height: 280px; }
   .hero-content-wrap { min-height: 280px; padding: 0 20px; }
   .hero-content { width: 100%; max-width: 100%; padding: 24px 0; }
