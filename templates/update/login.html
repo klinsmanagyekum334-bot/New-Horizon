@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Login — {{ site.brand_name if site else "EstateDev" }}</title>
+  <title>Admin Login — {{ site.brand_name if site else "New Horizon Coopers Limited" }}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  <!-- Changed to update.css -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/update.css') }}">
 </head>
 <body class="login-body">
 
@@ -21,7 +22,7 @@
 
     <h1>Admin Panel</h1>
     <p class="login-sub">
-      {{ site.brand_name if site else "EstateDev" }}
+      {{ site.brand_name if site else "New Horizon Coopers Limited" }}
     </p>
 
     {% with msgs = get_flashed_messages(with_categories=true) %}
@@ -33,7 +34,8 @@
       {% endfor %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('admin_login') }}">
+    <!-- Changed to update_login -->
+    <form method="POST" action="{{ url_for('update_login') }}">
       <input type="password"
              name="password"
              placeholder="Enter admin password"
