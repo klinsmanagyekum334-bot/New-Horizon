@@ -14,11 +14,6 @@ load_dotenv()
 # ============================================================
 # CONFIG
 # ============================================================
-# IMPORTANT: For production deployment (Render, Heroku, etc.), 
-# you MUST set the SUPABASE_KEY environment variable to your 
-# Supabase "service_role" secret key, NOT the "anon" or 
-# "publishable" key. The service_role key bypasses Row Level 
-# Security (RLS), allowing the backend to write/upload securely.
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://soeenrjxrspfsexdiuip.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_mYvFcs9_OSA0PTIbcj4djg_NHGB8DXC")
 
@@ -44,13 +39,12 @@ app.secret_key = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
 # ============================================================
-# PRODUCTION SESSION & PROXY CONFIG (required for Render)
+# PRODUCTION SESSION & PROXY CONFIG
 # ============================================================
 app.config["SESSION_COOKIE_SECURE"]   = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-# Trust Render's reverse proxy so session cookies work correctly
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
     x_for=1, x_proto=1, x_host=1, x_prefix=1
@@ -135,82 +129,6 @@ def get_schema_defaults():
         for f in sec["fields"]:
             out[f["key"]] = f["default"]
     return out
-
-
-# ============================================================
-# INIT — seed tables
-# ============================================================
-def seed_if_empty(table, rows):
-    try:
-        res = supabase.table(table).select("id").limit(1).execute()
-        if res.data:
-            return
-        supabase.table(table).insert(rows).execute()
-    except Exception as e:
-        print(f"seed {table} error:", e)
-
-
-def init_db():
-    # site_content
-    try:
-        res = supabase.table("nh_site_content").select("key").limit(1).execute()
-        if not res.data:
-            defaults = get_schema_defaults()
-            supabase.table("nh_site_content").insert(
-                [{"key": k, "value": v} for k, v in defaults.items()]
-            ).execute()
-    except Exception as e:
-        print("seed site_content error:", e)
-
-    # nav
-    seed_if_empty("nh_nav_links", [
-        {"label": "Home",       "url": "/",         "sort_order": 1, "is_locked": True},
-        {"label": "About Us",   "url": "/about",    "sort_order": 2, "is_locked": False},
-        {"label": "Housing",    "url": "/projects", "sort_order": 3, "is_locked": False},
-        {"label": "Gallery",    "url": "/gallery",  "sort_order": 4, "is_locked": False},
-        {"label": "Contact Us", "url": "/contact",  "sort_order": 5, "is_locked": False},
-    ])
-
-    # projects
-    seed_if_empty("nh_projects", [
-        {"slug":"east-legon-villas","name":"East Legon Villas","category":"residential","status":"ongoing",
-         "short_desc":"Luxury gated villas with private gardens, modern amenities, and premium finishes.",
-         "long_desc":"East Legon Villas is an exclusive collection of modern luxury villas nestled in the heart of Accra.",
-         "location":"East Legon, Accra","units":"48 Villas","price_from":420000,
-         "image":"https://picsum.photos/seed/eastlegon/600/400",
-         "hero_image":"https://picsum.photos/seed/eastlegon/1600/900","featured":True,"sort_order":1},
-        {"slug":"tema-eco-townhomes","name":"Tema Eco Townhomes","category":"residential","status":"available",
-         "short_desc":"Eco-friendly townhouses surrounded by green spaces and community amenities.",
-         "long_desc":"Tema Eco Townhomes offers a new standard of sustainable family living.",
-         "location":"Tema, Greater Accra","units":"32 Townhomes","price_from":385000,
-         "image":"https://picsum.photos/seed/temaeco/600/400",
-         "hero_image":"https://picsum.photos/seed/temaeco/1600/900","featured":True,"sort_order":2},
-        {"slug":"airport-city-lofts","name":"Airport City Lofts","category":"commercial","status":"pre-launch",
-         "short_desc":"Modern commercial spaces with rooftop lounge and co-working areas.",
-         "long_desc":"Airport City Lofts is a landmark commercial development near Kotoka International Airport.",
-         "location":"Airport City, Accra","units":"12 Units","price_from":220000,
-         "image":"https://picsum.photos/seed/airportcity/600/400",
-         "hero_image":"https://picsum.photos/seed/airportcity/1600/900","featured":True,"sort_order":3},
-        {"slug":"kumasi-garden-estate","name":"Kumasi Garden Estate","category":"residential","status":"ongoing",
-         "short_desc":"Spacious family homes with lush gardens in Kumasi's fastest-growing suburb.",
-         "long_desc":"Kumasi Garden Estate is a master-planned community in Asokwa, Kumasi.",
-         "location":"Asokwa, Kumasi","units":"60 Homes","price_from":310000,
-         "image":"https://picsum.photos/seed/kumasigarden/600/400",
-         "hero_image":"https://picsum.photos/seed/kumasigarden/1600/900","featured":False,"sort_order":4},
-        {"slug":"takoradi-business-park","name":"Takoradi Business Park","category":"commercial","status":"available",
-         "short_desc":"Purpose-built commercial park for offices, retail, and light industry.",
-         "long_desc":"Takoradi Business Park is a mixed-use commercial development in Ghana's oil city.",
-         "location":"Takoradi, Western Region","units":"24 Units","price_from":195000,
-         "image":"https://picsum.photos/seed/takoradipark/600/400",
-         "hero_image":"https://picsum.photos/seed/takoradipark/1600/900","featured":False,"sort_order":5},
-    ])
-
-    # video placeholder (empty — admin will upload)
-    seed_if_empty("nh_videos", [
-        {"title":"New Horizon Showreel",
-         "description":"A glimpse into our latest developments across Ghana.",
-         "filename":"", "is_featured": True, "sort_order": 1}
-    ])
 
 
 # ============================================================
@@ -364,6 +282,26 @@ def save_video(file_storage):
 
 
 # ============================================================
+# GLOBAL TEMPLATE CONTEXT
+# Makes `site` and `nav_links` available in EVERY template
+# (including all /update/* pages that were crashing with 500)
+# ============================================================
+@app.context_processor
+def inject_globals():
+    try:
+        return {
+            "site":      fetch_site(),
+            "nav_links": fetch_nav(),
+        }
+    except Exception as e:
+        print("context_processor error:", e)
+        return {
+            "site":      {},
+            "nav_links": [],
+        }
+
+
+# ============================================================
 # SEARCH
 # ============================================================
 def _normalize(text):
@@ -403,8 +341,6 @@ def index():
 
     return render_template(
         "index.html",
-        site=fetch_site(),
-        nav_links=fetch_nav(),
         carousel_projects=carousel,
         grid_projects=grid,
         featured_video=fetch_featured_video(),
@@ -413,20 +349,17 @@ def index():
 
 @app.route("/videos")
 def videos_page():
-    return render_template("videos.html", site=fetch_site(),
-                           nav_links=fetch_nav(), videos=fetch_videos())
+    return render_template("videos.html", videos=fetch_videos())
 
 
 @app.route("/gallery")
 def gallery_page():
-    return render_template("gallery.html", site=fetch_site(),
-                           nav_links=fetch_nav(), images=fetch_gallery())
+    return render_template("gallery.html", images=fetch_gallery())
 
 
 @app.route("/projects")
 def projects():
-    return render_template("projects.html", site=fetch_site(),
-                           nav_links=fetch_nav(),
+    return render_template("projects.html",
                            projects=fetch_projects(), active_category=None)
 
 
@@ -435,31 +368,28 @@ def project_detail(slug):
     project = fetch_project(slug)
     if not project:
         abort(404)
-    return render_template("project_detail.html", site=fetch_site(),
-                           nav_links=fetch_nav(),
+    return render_template("project_detail.html",
                            project=project,
                            related=fetch_projects(category=project["category"])[:3])
 
 
 @app.route("/residentials")
 def residentials():
-    return render_template("projects.html", site=fetch_site(),
-                           nav_links=fetch_nav(),
+    return render_template("projects.html",
                            projects=fetch_projects(category="residential"),
                            active_category="residential")
 
 
 @app.route("/commercial")
 def commercial():
-    return render_template("projects.html", site=fetch_site(),
-                           nav_links=fetch_nav(),
+    return render_template("projects.html",
                            projects=fetch_projects(category="commercial"),
                            active_category="commercial")
 
 
 @app.route("/about")
 def about():
-    return render_template("about.html", site=fetch_site(), nav_links=fetch_nav())
+    return render_template("about.html")
 
 
 @app.route("/contact", methods=["GET", "POST"])
@@ -483,7 +413,7 @@ def contact():
         else:
             flash("Please fill in your name and message.", "error")
         return redirect(url_for("contact"))
-    return render_template("contact.html", site=fetch_site(), nav_links=fetch_nav())
+    return render_template("contact.html")
 
 
 @app.route("/book", methods=["GET", "POST"])
@@ -508,7 +438,7 @@ def book():
         else:
             flash("Please provide your name and either an email or phone number.", "error")
         return redirect(url_for("book"))
-    return render_template("book.html", site=fetch_site(), nav_links=fetch_nav())
+    return render_template("book.html")
 
 
 # ============================================================
@@ -574,8 +504,12 @@ def api_search():
 @app.route("/update/login", methods=["GET", "POST"])
 def update_login():
     if request.method == "POST":
-        if request.form.get("password") == ADMIN_PASSWORD:
+        pwd = request.form.get("password", "")
+        print(f"[LOGIN] POST received, pwd_len={len(pwd)}, match={pwd == ADMIN_PASSWORD}")
+        if pwd == ADMIN_PASSWORD:
             session["admin_logged_in"] = True
+            session.permanent = True
+            print(f"[LOGIN] Session set: {dict(session)}")
             return redirect(url_for("update_dashboard"))
         flash("Wrong password", "error")
     return render_template("update/login.html")
@@ -593,6 +527,7 @@ def update_logout():
 @app.route("/update")
 @login_required
 def update_dashboard():
+    print(f"[DASHBOARD] Session: {dict(session)}")
     def count(table):
         try:
             res = supabase.table(table).select("id").execute()
@@ -645,7 +580,7 @@ def update_site():
             print("update_site error:", e)
             flash(f"Error: {e}", "error")
         return redirect(url_for("update_site"))
-    return render_template("update/site.html", site=fetch_site(), schema=SITE_SCHEMA)
+    return render_template("update/site.html", schema=SITE_SCHEMA)
 
 
 # ============================================================
@@ -971,12 +906,12 @@ def too_large(e):
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template("404.html", site=fetch_site(), nav_links=fetch_nav()), 404
+    return render_template("404.html"), 404
 
 
 @app.errorhandler(500)
 def server_error(e):
-    return render_template("500.html", site=fetch_site(), nav_links=fetch_nav()), 500
+    return render_template("500.html"), 500
 
 
 # ============================================================
@@ -985,5 +920,4 @@ def server_error(e):
 init_db()
 
 if __name__ == "__main__":
-    # IMPORTANT: debug=False for production!
     app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
