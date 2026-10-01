@@ -384,24 +384,19 @@ input, textarea, select { font-family: inherit; }
   height: 100%;
   object-fit: cover;
   object-position: right center;
-  /* Enhanced clarity: brighter, richer, higher contrast */
-  filter: contrast(1.10) saturate(1.20) brightness(1.06);
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
-  /* Dark only on the left ~25% (where text sits), then fades to fully clear.
-     Right 70%+ of the image is crystal clear. */
   background: linear-gradient(
     90deg,
-    rgba(10, 31, 51, 0.88) 0%,
-    rgba(10, 31, 51, 0.82) 12%,
-    rgba(10, 31, 51, 0.62) 22%,
-    rgba(10, 31, 51, 0.30) 32%,
-    rgba(10, 31, 51, 0.08) 44%,
-    rgba(10, 31, 51, 0.00) 56%,
+    rgba(10, 31, 51, 1.00) 0%,
+    rgba(10, 31, 51, 1.00) 38%,
+    rgba(10, 31, 51, 0.85) 50%,
+    rgba(10, 31, 51, 0.35) 62%,
+    rgba(10, 31, 51, 0.00) 75%,
     rgba(10, 31, 51, 0.00) 100%
   );
   pointer-events: none;
@@ -419,18 +414,18 @@ input, textarea, select { font-family: inherit; }
 }
 
 .hero-content {
-  max-width: 380px;
-  width: 38%;
+  max-width: 480px;
+  width: 46%;
   padding: 32px 0;
 }
 
 .hero-title {
   font-family: 'Poppins', sans-serif;
-  font-size: 38px;
+  font-size: 40px;
   font-weight: 800;
   letter-spacing: -1.2px;
-  line-height: 1.12;
-  margin-bottom: 14px;
+  line-height: 1.08;
+  margin-bottom: 12px;
   color: var(--white);
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
 }
@@ -443,7 +438,7 @@ input, textarea, select { font-family: inherit; }
 }
 
 .hero-subtitle {
-  font-size: 15.5px;
+  font-size: 15px;
   color: #d8e3ec;
   line-height: 1.55;
   margin-bottom: 22px;
@@ -1838,7 +1833,7 @@ input, textarea, select { font-family: inherit; }
   .section-title { font-size: 24px; }
   .section-subtitle { font-size: 14px; }
 
-  /* HERO mobile — full-width text needs stronger overall overlay */
+  /* HERO mobile — text spans full width, so switch to vertical overlay */
   .hero { min-height: 280px; }
   .hero-content-wrap { min-height: 280px; padding: 0 20px; }
   .hero-content { width: 100%; max-width: 100%; padding: 24px 0; }
