@@ -9,19 +9,122 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <!-- Changed to update.css -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/update.css') }}">
+
+  <style>
+    /* Inline fallback so login always looks styled */
+    body.login-body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f2b2f 0%, #1a4a4f 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 400px;
+      margin: 20px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
+    .login-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #e0f2f1;
+      color: #0d9488;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+    .login-card h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 8px;
+    }
+    .login-sub {
+      color: #64748b;
+      font-size: 14px;
+      margin: 0 0 24px;
+    }
+    .login-flash {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+    .login-flash-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .login-flash-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .login-card form { display: flex; flex-direction: column; gap: 14px; }
+    .login-card input[type="password"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-card input[type="password"]:focus {
+      border-color: #0d9488;
+      box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px 16px;
+      background: #0d9488;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .login-btn:hover { background: #0f766e; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 20px;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .back-link:hover { color: #0d9488; }
+  </style>
 </head>
 <body class="login-body">
 
   <div class="login-card">
 
     <div class="login-icon">
-      <i class="fa-solid fa-house-chimney"></i>
+      <i class="fa-solid fa-lock"></i>
     </div>
 
-    <h1>Admin Panel</h1>
+    <h1>Control Panel</h1>
     <p class="login-sub">
       {{ site.brand_name if site else "New Horizon Coopers Limited" }}
     </p>
@@ -35,7 +138,6 @@
       {% endfor %}
     {% endwith %}
 
-    <!-- Changed to update_login -->
     <form method="POST" action="{{ url_for('update_login') }}">
       <input type="password"
              name="password"
