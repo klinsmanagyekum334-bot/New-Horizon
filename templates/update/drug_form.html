@@ -1,0 +1,265 @@
+{% extends "update/base_update.html" %}
+{% block title %}{{ 'Edit' if drug else 'Add' }} Product — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">{{ 'Edit' if drug else 'Add' }} Product</h1>
+    <p class="update-page-sub">
+      {{ 'Update the pharmaceutical product below.' if drug else 'Fill in the details to add a new product.' }}
+    </p>
+  </div>
+  <a href="{{ url_for('update_drugs') }}" class="update-btn update-btn-secondary">
+    <i class="fa-solid fa-arrow-left"></i> Back
+  </a>
+</div>
+
+<form method="POST"
+      action="{{ url_for('update_drug_edit', did=drug.id) if drug else url_for('update_drug_new') }}"
+      enctype="multipart/form-data"
+      class="update-form">
+
+  <!-- ── Basic info ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-capsules"></i> Product Info</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field full">
+        <label for="name">Product Name *</label>
+        <input type="text" id="name" name="name"
+               value="{{ drug.name if drug else '' }}"
+               placeholder="e.g. Paracetamol 500mg" required>
+      </div>
+
+      <div class="update-field full">
+        <label for="slug">URL Slug *</label>
+        <input type="text" id="slug" name="slug"
+               value="{{ drug.slug if drug else '' }}"
+               placeholder="e.g. paracetamol-500mg" required>
+        <p class="update-hint">Lowercase, hyphens instead of spaces. Fills automatically from the name.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Type ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-tag"></i> Type</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field full">
+        <label for="drug_type">Product Type</label>
+        <input type="text"
+               id="drug_type"
+               name="drug_type"
+               list="drug_types_list"
+               value="{{ drug.drug_type if drug and drug.drug_type else '' }}"
+               placeholder="Start typing… or pick from the list below">
+        <datalist id="drug_types_list">
+          {% for t in drug_types %}
+          <option value="{{ t.label }}"></option>
+          {% endfor %}
+        </datalist>
+        <p class="update-hint">
+          Type anything — new types get saved automatically and appear as filter chips
+          (e.g. Pain Killer, Over the Counter, Supplement, Herbal, Prescription).
+        </p>
+      </div>
+    </div>
+
+    {% if drug_types %}
+    <div class="update-quick-picks">
+      <span class="update-quick-picks-label">Quick picks:</span>
+      {% for t in drug_types %}
+      <button type="button"
+              class="update-chip-btn"
+              onclick="document.getElementById('drug_type').value = '{{ t.label }}';">
+        {{ t.label }}
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Price ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-coins"></i> Price</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field update-field-sm">
+        <label for="currency">Currency</label>
+        <select id="currency" name="currency" required>
+          <option value="GHS" {% if not drug or drug.currency == 'GHS' %}selected{% endif %}>GHC — Ghana Cedi</option>
+          <option value="USD" {% if drug and drug.currency == 'USD' %}selected{% endif %}>$ — US Dollar</option>
+        </select>
+      </div>
+
+      <div class="update-field">
+        <label for="price">Price</label>
+        <input type="number" id="price" name="price"
+               value="{{ drug.price if drug else '' }}"
+               placeholder="e.g. 12" min="0" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Description ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-align-left"></i> Description</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field full">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="5"
+                  placeholder="e.g. Fast-acting relief for headaches, fever and mild pain. 24 tablets per pack.">{{ drug.description if drug else '' }}</textarea>
+        <p class="update-hint">Shown under the product name on the card.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Media ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-image"></i> Image &amp; Video</h2>
+
+    <!-- Product image -->
+    <div class="update-field full update-image-field">
+      <label>Product Image</label>
+      <div class="update-image-row">
+        <div class="update-image-preview">
+          <img id="preview_image"
+               src="{{ drug.image if drug and drug.image else 'https://picsum.photos/seed/newdrug/300/200' }}"
+               alt="Product preview">
+        </div>
+        <div class="update-image-controls">
+          <div class="update-image-actions">
+            <label for="image_file" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-folder-open"></i> Upload
+            </label>
+            <input type="file" id="image_file" name="image_file"
+                   accept="image/*" hidden
+                   onchange="previewFile(this, 'preview_image')">
+          </div>
+          <div class="update-field">
+            <label for="image_url">…or paste image URL</label>
+            <input type="text" id="image_url" name="image_url"
+                   value="{% if drug and drug.image and not drug.image.startswith('/static/') %}{{ drug.image }}{% endif %}"
+                   placeholder="https://..."
+                   oninput="previewUrl(this, 'preview_image')">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product video -->
+    <div class="update-field full update-image-field">
+      <label>Product Video (optional)</label>
+      <div class="update-image-row">
+        <div class="update-image-preview">
+          {% if drug and drug.video %}
+            <video preload="metadata" muted style="width:100%;height:100%;object-fit:cover;background:#000;border-radius:8px;">
+              <source src="{{ drug.video }}" type="video/mp4">
+            </video>
+          {% else %}
+            <div style="display:grid;place-items:center;height:100%;color:#8a8272;font-size:12px;text-align:center;padding:12px;">
+              No video uploaded
+            </div>
+          {% endif %}
+        </div>
+        <div class="update-image-controls">
+          <div class="update-image-actions">
+            <label for="video_file" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-video"></i> Upload Video
+            </label>
+            <input type="file" id="video_file" name="video_file"
+                   accept="video/mp4,video/webm,video/quicktime" hidden>
+          </div>
+          <div class="update-field">
+            <label for="video_url">…or paste video URL</label>
+            <input type="text" id="video_url" name="video_url"
+                   value="{% if drug and drug.video and not drug.video.startswith('/static/') %}{{ drug.video }}{% endif %}"
+                   placeholder="https://... or /static/uploads/nh-videos/xyz.mp4">
+          </div>
+          <p class="update-hint">Max 20MB · MP4, WebM, or MOV</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Feature checkbox ── -->
+  <div class="update-panel">
+    <div class="update-field full update-checkbox-field">
+      <label class="update-checkbox">
+        <input type="checkbox" name="featured"
+               {% if drug and drug.featured %}checked{% endif %}>
+        <span><strong>Feature on main menu</strong> — shown highlighted in the Pharma section on the homepage</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── Actions ── -->
+  <div class="update-form-actions">
+    <a href="{{ url_for('update_drugs') }}" class="update-btn update-btn-secondary">
+      Cancel
+    </a>
+    <button type="submit" class="update-btn update-btn-primary">
+      <i class="fa-solid fa-check"></i>
+      {{ 'Save Changes' if drug else 'Save' }}
+    </button>
+  </div>
+</form>
+
+{% if drug %}
+<div class="update-panel update-panel-danger">
+  <h2 class="update-panel-title"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h2>
+  <p class="update-hint" style="margin-bottom: 14px;">
+    Deleting a product is permanent. The image, video and listing data will be removed from the database.
+  </p>
+  <form method="POST"
+        action="{{ url_for('update_drug_delete', did=drug.id) }}"
+        onsubmit="return confirm('Delete this product permanently?');"
+        style="margin:0;">
+    <button type="submit" class="update-btn update-btn-danger">
+      <i class="fa-solid fa-trash"></i> Delete Product
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<script>
+  // Image previews
+  function previewFile(input, targetId) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { document.getElementById(targetId).src = e.target.result; };
+    reader.readAsDataURL(input.files[0]);
+  }
+  function previewUrl(input, targetId) {
+    const v = input.value.trim();
+    if (v) document.getElementById(targetId).src = v;
+  }
+
+  // Auto-fill slug from name (only when creating new)
+  {% if not drug %}
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    if (nameInput && slugInput) {
+      nameInput.addEventListener('input', () => {
+        if (!slugInput.dataset.touched) {
+          slugInput.value = nameInput.value
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+        }
+      });
+      slugInput.addEventListener('input', () => {
+        slugInput.dataset.touched = '1';
+      });
+    }
+  });
+  {% endif %}
+</script>
+
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "update/base_update.html" %}
+{% block title %}Product Types — Control Panel{% endblock %}
+
+{% block content %}
+
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Product Types</h1>
+    <p class="update-page-sub">
+      These become the filter chips on the Pharma section.
+      Add, rename, disable or delete them here.
+    </p>
+  </div>
+  <a href="{{ url_for('update_drugs') }}" class="update-btn update-btn-secondary">
+    <i class="fa-solid fa-arrow-left"></i> Back to Products
+  </a>
+</div>
+
+<!-- Add new type -->
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-plus"></i> Add New Type</h2>
+
+  <form method="POST" action="{{ url_for('update_drug_type_new') }}" class="update-inline-form">
+    <div class="update-field">
+      <label for="label">Type Name</label>
+      <input type="text" id="label" name="label"
+             placeholder="e.g. Antibiotics, Vitamins, First Aid" required>
+    </div>
+    <div class="update-field update-field-sm">
+      <label for="sort_order">Order</label>
+      <input type="number" id="sort_order" name="sort_order" value="99" min="0">
+    </div>
+    <button type="submit" class="update-btn update-btn-primary">
+      <i class="fa-solid fa-plus"></i> Add
+    </button>
+  </form>
+</div>
+
+<!-- Existing types -->
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-list"></i> Existing Types ({{ types|length }})</h2>
+
+  {% if types %}
+  <div class="update-nav-list">
+    {% for t in types %}
+    <div class="update-nav-row {% if not t.is_active %}update-nav-row-locked{% endif %}">
+
+      <div class="update-nav-row-head">
+        {% if t.is_active %}
+        <span class="update-pill update-pill-category">
+          <i class="fa-solid fa-circle-check"></i> ACTIVE
+        </span>
+        {% else %}
+        <span class="update-pill update-pill-muted">
+          <i class="fa-solid fa-eye-slash"></i> HIDDEN
+        </span>
+        {% endif %}
+        <span class="update-nav-order">#{{ t.sort_order }}</span>
+      </div>
+
+      <form method="POST"
+            action="{{ url_for('update_drug_type_edit', tid=t.id) }}"
+            class="update-inline-form update-nav-form">
+
+        <div class="update-field">
+          <label>Label</label>
+          <input type="text" name="label" value="{{ t.label }}" required>
+        </div>
+
+        <div class="update-field update-field-sm">
+          <label>Order</label>
+          <input type="number" name="sort_order" value="{{ t.sort_order }}" min="0">
+        </div>
+
+        <div class="update-field update-checkbox-field update-field-sm">
+          <label class="update-checkbox update-checkbox-inline">
+            <input type="checkbox" name="is_active" {% if t.is_active %}checked{% endif %}>
+            <span>Active</span>
+          </label>
+        </div>
+
+        <button type="submit" class="update-btn update-btn-primary">
+          <i class="fa-solid fa-check"></i> Save
+        </button>
+      </form>
+
+      <form method="POST"
+            action="{{ url_for('update_drug_type_delete', tid=t.id) }}"
+            onsubmit="return confirm('Delete this type? Products using it will keep their type name, but the chip will disappear.');"
+            class="update-nav-delete">
+        <button type="submit" class="update-btn update-btn-danger update-btn-sm">
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      </form>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <p class="update-empty-text">No types yet. Add your first one above.</p>
+  {% endif %}
+</div>
+
+<div class="update-panel">
+  <h2 class="update-panel-title"><i class="fa-solid fa-circle-info"></i> How it works</h2>
+  <ul class="update-info-list">
+    <li><strong>Active</strong> types appear as filter chips on the homepage Pharma section.</li>
+    <li>Turning a chip <strong>off</strong> hides it from the site but keeps existing products tagged with that name.</li>
+    <li><strong>Renaming</strong> a type automatically updates every product using the old name.</li>
+    <li><strong>Deleting</strong> a type removes the chip, but products keep their current type label.</li>
+    <li>You can also just type a new type directly on the <a href="{{ url_for('update_drug_new') }}">Add Product</a> form — it gets registered here automatically.</li>
+  </ul>
+</div>
+
+{% endblock %}

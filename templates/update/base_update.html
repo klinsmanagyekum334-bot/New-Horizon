@@ -13,9 +13,9 @@
 </head>
 <body class="update-body">
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      SIDEBAR
-     ============================================================ -->
+     ═══════════════════════════════════════════════════════ -->
 <aside class="update-sidebar">
 
   <a href="{{ url_for('update_dashboard') }}" class="update-logo">
@@ -30,12 +30,14 @@
 
   <nav class="update-nav">
 
+    <!-- ── Dashboard ── -->
     <a href="{{ url_for('update_dashboard') }}"
        class="{% if request.endpoint == 'update_dashboard' %}active{% endif %}">
       <i class="fa-solid fa-gauge-high"></i>
       <span>Dashboard</span>
     </a>
 
+    <!-- ── Content ── -->
     <div class="update-nav-group">Content</div>
 
     <a href="{{ url_for('update_site') }}"
@@ -45,9 +47,27 @@
     </a>
 
     <a href="{{ url_for('update_projects') }}"
-       class="{% if request.endpoint and request.endpoint.startswith('update_project') %}active{% endif %}">
+       class="{% if request.endpoint and request.endpoint.startswith('update_project') and 'type' not in request.endpoint %}active{% endif %}">
       <i class="fa-solid fa-building"></i>
-      <span>Projects</span>
+      <span>Properties</span>
+    </a>
+
+    <a href="{{ url_for('update_property_types') }}"
+       class="{% if request.endpoint and 'property_type' in request.endpoint %}active{% endif %}">
+      <i class="fa-solid fa-tags"></i>
+      <span>Property Types</span>
+    </a>
+
+    <a href="{{ url_for('update_drugs') }}"
+       class="{% if request.endpoint and request.endpoint.startswith('update_drug_') and 'type' not in request.endpoint %}active{% endif %}">
+      <i class="fa-solid fa-prescription-bottle-medical"></i>
+      <span>Drugs</span>
+    </a>
+
+    <a href="{{ url_for('update_drug_types') }}"
+       class="{% if request.endpoint and 'drug_type' in request.endpoint %}active{% endif %}">
+      <i class="fa-solid fa-capsules"></i>
+      <span>Drug Types</span>
     </a>
 
     <a href="{{ url_for('update_videos') }}"
@@ -68,6 +88,7 @@
       <span>Navigation</span>
     </a>
 
+    <!-- ── Messages ── -->
     <div class="update-nav-group">Messages</div>
 
     <a href="{{ url_for('update_inquiries') }}"
@@ -89,9 +110,9 @@
 
 </aside>
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      MAIN
-     ============================================================ -->
+     ═══════════════════════════════════════════════════════ -->
 <main class="update-main">
 
   {% with msgs = get_flashed_messages(with_categories=true) %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% set page_heading = "Pharmaceutical Products" %}
+{% set page_sub = "Browse our full range of medicines, supplements and wellness products — distributed nationwide with cold-chain precision." %}
+
+{% if active_type %}
+  {% set page_heading = active_type %}
+  {% set page_sub = "All " ~ active_type|lower ~ " products we currently stock." %}
+{% endif %}
+
+{% block title %}{{ page_heading }} — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE HEADER — green theme
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-drugs-header">
+  <div class="nh-container">
+    <span class="nh-drugs-header-eyebrow">
+      <i class="fa-solid fa-prescription-bottle-medical"></i>
+      Pharmaceuticals
+    </span>
+    <h1 class="nh-drugs-header-title">{{ page_heading }}</h1>
+    <p class="nh-drugs-header-sub">{{ page_sub }}</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     FILTER CHIPS — All + admin-managed types
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-drugs-filter-section">
+  <div class="nh-container">
+    <div class="nh-pharma-filters" role="tablist">
+      <a href="{{ url_for('drugs_page') }}"
+         class="nh-pharma-chip {% if not active_type %}active{% endif %}">
+        All
+      </a>
+      {% if drug_types %}
+        {% for t in drug_types %}
+        <a href="{{ url_for('drugs_page') }}?type={{ t | urlencode }}"
+           class="nh-pharma-chip {% if active_type and active_type|lower == t|lower %}active{% endif %}">
+          {{ t }}
+        </a>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     PRODUCTS GRID
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-drugs-grid-section">
+  <div class="nh-container">
+
+    {% if drugs %}
+    <div class="nh-pharma-grid-2">
+      {% for d in drugs %}
+      <article class="nh-med-card">
+
+        <div class="nh-med-media">
+          <img src="{{ d.image if d.image else 'https://picsum.photos/seed/' ~ d.slug ~ '/800/500' }}"
+               alt="{{ d.name }}" loading="lazy">
+
+          {% if d.drug_type %}
+          <span class="nh-med-badge
+                       {% if 'pain' in d.drug_type|lower %}nh-med-badge-otc
+                       {% elif 'herbal' in d.drug_type|lower %}nh-med-badge-herbal
+                       {% elif 'prescri' in d.drug_type|lower %}nh-med-badge-rx
+                       {% elif 'supplement' in d.drug_type|lower %}nh-med-badge-wellness
+                       {% else %}nh-med-badge-device{% endif %}">
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+            {{ d.drug_type }}
+          </span>
+          {% endif %}
+
+          {% if d.video %}
+          <button type="button"
+                  class="nh-med-video-badge"
+                  onclick="nhPlayVideo('{{ d.video }}', '{{ d.name | e }}'); event.preventDefault(); event.stopPropagation();">
+            <i class="fa-solid fa-circle-play"></i> Video
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('contact') }}" class="nh-med-fav" aria-label="Save">
+            <i class="fa-regular fa-heart"></i>
+          </a>
+        </div>
+
+        <div class="nh-med-body">
+          <h3 class="nh-med-name">{{ d.name }}</h3>
+
+          {% if d.drug_type %}
+          <p class="nh-med-mfr">
+            <i class="fa-solid fa-tag"></i>
+            {{ d.drug_type }}
+          </p>
+          {% endif %}
+
+          {% if d.description %}
+          <p class="nh-med-desc">{{ d.description }}</p>
+          {% endif %}
+
+          <div class="nh-med-bottom">
+            <span class="nh-med-price">
+              {% if d.currency == 'USD' %}
+                ${{ "{:,}".format(d.price|int) }}
+              {% else %}
+                GHS {{ "{:,}".format(d.price|int) }}
+              {% endif %}
+            </span>
+            <a href="{{ url_for('contact') }}" class="nh-med-cta">
+              Order <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+    </div>
+
+    {% else %}
+
+    <div class="nh-drugs-empty">
+      <i class="fa-solid fa-prescription-bottle-medical"></i>
+      <h3>No products found</h3>
+      <p>
+        {% if active_type %}
+          There are no <strong>{{ active_type }}</strong> products at the moment.
+          <a href="{{ url_for('drugs_page') }}">View all products →</a>
+        {% else %}
+          Products will appear here once the admin adds them.
+        {% endif %}
+      </p>
+    </div>
+
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     CTA — deep orange band
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-cta">
+  <div class="nh-cta-bg"></div>
+  <div class="nh-container nh-cta-inner">
+    <span class="nh-eyebrow nh-eyebrow-light">{{ site.cta_eyebrow or "Let's talk" }}</span>
+    <h2 class="nh-cta-title">
+      {{ site.cta_title or "Ready to find your" }}<br>
+      <em>{{ site.cta_title_em or "next address?" }}</em>
+    </h2>
+    <p class="nh-cta-sub">
+      {{ site.cta_sub or "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away." }}
+    </p>
+    <div class="nh-cta-actions">
+      <a href="{{ url_for('book') }}" class="nh-btn-round nh-btn-round-light">
+        {{ site.cta_btn_primary or "Book a consultation" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <a href="{{ url_for('contact') }}" class="nh-btn-round nh-btn-round-outline">
+        {{ site.cta_btn_secondary or "Contact us" }}
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     VIDEO LIGHTBOX
+     ═══════════════════════════════════════════════════════ -->
+<div class="nh-vlb" id="nhVlb" aria-hidden="true" onclick="nhCloseVideo(event)">
+  <button type="button" class="nh-vlb-close" onclick="nhCloseVideo(event)" aria-label="Close">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="nh-vlb-stage" onclick="event.stopPropagation();">
+    <video class="nh-vlb-player" id="nhVlbPlayer" controls preload="metadata">
+      <source src="" type="video/mp4">
+    </video>
+    <p class="nh-vlb-caption" id="nhVlbCaption"></p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const vlb     = document.getElementById('nhVlb');
+    const player  = document.getElementById('nhVlbPlayer');
+    const caption = document.getElementById('nhVlbCaption');
+
+    window.nhPlayVideo = function (url, name) {
+      if (!vlb || !player) return;
+      const src = player.querySelector('source');
+      if (src) src.src = url;
+      player.load();
+      if (caption) caption.textContent = name || '';
+      vlb.classList.add('open');
+      vlb.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => player.play().catch(() => {}), 100);
+    };
+
+    window.nhCloseVideo = function (ev) {
+      if (ev) ev.stopPropagation();
+      if (!vlb) return;
+      vlb.classList.remove('open');
+      vlb.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && vlb && vlb.classList.contains('open')) {
+        nhCloseVideo();
+      }
+    });
+  })();
+</script>
+
+{% endblock %}

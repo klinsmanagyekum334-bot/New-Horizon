@@ -1,49 +1,50 @@
 {% extends "base.html" %}
 
+{% set page_heading = "Our Properties" %}
+{% set page_sub = "Explore our full portfolio of residential and commercial developments across Ghana." %}
+
 {% if active_category == "residential" %}
-  {% set page_heading = "Residential Projects" %}
+  {% set page_heading = "Residential Properties" %}
   {% set page_sub = "Family homes, villas and townhomes designed for modern living across Ghana." %}
 {% elif active_category == "commercial" %}
-  {% set page_heading = "Commercial Projects" %}
+  {% set page_heading = "Commercial Properties" %}
   {% set page_sub = "Premium office spaces, retail units and mixed-use developments for forward-thinking businesses." %}
-{% else %}
-  {% set page_heading = "Our Projects" %}
-  {% set page_sub = "Explore our full portfolio of residential and commercial developments across Ghana." %}
 {% endif %}
 
-{% block title %}{{ page_heading }} — {{ site.brand_name or "EstateDev" }}{% endblock %}
+{% block title %}{{ page_heading }} — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
 
 {% block content %}
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      PAGE HEADER
-     ============================================================ -->
-<section class="page-header">
-  <div class="container">
-    <h1 class="page-header-title">{{ page_heading }}</h1>
-    <p class="page-header-sub">{{ page_sub }}</p>
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-proj-header">
+  <div class="nh-container">
+    <span class="nh-proj-header-eyebrow">Our Portfolio</span>
+    <h1 class="nh-proj-header-title">{{ page_heading }}</h1>
+    <p class="nh-proj-header-sub">{{ page_sub }}</p>
   </div>
 </section>
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      FILTER TABS
-     ============================================================ -->
-<section class="projects-filter-section">
-  <div class="container">
-    <div class="filter-tabs">
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-proj-filter-section">
+  <div class="nh-container">
+    <div class="nh-proj-tabs">
 
       <a href="{{ url_for('projects') }}"
-         class="filter-tab {% if not active_category %}active{% endif %}">
-        <i class="fa-solid fa-border-all"></i> All Projects
+         class="nh-proj-tab {% if not active_category %}active{% endif %}">
+        <i class="fa-solid fa-border-all"></i> All Properties
       </a>
 
       <a href="{{ url_for('residentials') }}"
-         class="filter-tab {% if active_category == 'residential' %}active{% endif %}">
-        <i class="fa-solid fa-house"></i> Residentials
+         class="nh-proj-tab {% if active_category == 'residential' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i> Residential
       </a>
 
       <a href="{{ url_for('commercial') }}"
-         class="filter-tab {% if active_category == 'commercial' %}active{% endif %}">
+         class="nh-proj-tab {% if active_category == 'commercial' %}active{% endif %}">
         <i class="fa-solid fa-building"></i> Commercial
       </a>
 
@@ -51,63 +52,113 @@
   </div>
 </section>
 
-<!-- ============================================================
-     PROJECTS GRID
-     ============================================================ -->
-<section class="section section-soft">
-  <div class="container">
+<!-- ═══════════════════════════════════════════════════════
+     PROPERTIES GRID
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-proj-grid-section">
+  <div class="nh-container">
 
     {% if projects %}
-
-    <div class="projects-grid">
-
+    <div class="nh-listings-grid">
       {% for p in projects %}
-      <article class="project-card">
+      <article class="nh-listing-card">
 
-        <div class="project-image">
-          <span class="project-badge badge-{{ p.status }}">
-            {{ p.category | capitalize }} • {{ p.status | replace('-', ' ') | title }}
+        <div class="nh-listing-media">
+          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/800/500' }}"
+               alt="{{ p.name }}" loading="lazy">
+
+          {% if p.featured %}
+          <span class="nh-listing-badge nh-listing-badge-featured">
+            <i class="fa-solid fa-star"></i> Featured
           </span>
-          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
-               alt="{{ p.name }}">
+          {% else %}
+          <span class="nh-listing-badge nh-listing-badge-verified">
+            <i class="fa-solid fa-circle-check"></i> Verified
+          </span>
+          {% endif %}
+
+          {% if p.video %}
+          <span class="nh-listing-video-badge">
+            <i class="fa-solid fa-circle-play"></i> Video
+          </span>
+          {% endif %}
+
+          <a href="{{ url_for('project_detail', slug=p.slug) }}"
+             class="nh-listing-fav" aria-label="Save">
+            <i class="fa-regular fa-heart"></i>
+          </a>
+
+          <span class="nh-listing-cat">
+            {% if p.category == 'other' and p.custom_type %}
+              {{ p.custom_type | upper }}
+            {% else %}
+              {{ p.category | upper }}
+            {% endif %}
+            {% if p.status %} · {{ p.status | replace('-', ' ') | upper }}{% endif %}
+          </span>
         </div>
 
-        <div class="project-body">
-          <h3 class="project-name">{{ p.name }}</h3>
-          <p class="project-desc">{{ p.short_desc }}</p>
+        <div class="nh-listing-body">
+          <h3 class="nh-listing-name">{{ p.name }}</h3>
 
-          <div class="project-meta">
+          {% if p.location %}
+          <p class="nh-listing-loc">
             <i class="fa-solid fa-location-dot"></i>
-            <span>{{ p.location }}{% if p.units %} • {{ p.units }}{% endif %}</span>
+            {{ p.location }}
+          </p>
+          {% endif %}
+
+          <div class="nh-listing-amen">
+            {% if p.short_desc %}
+            <span><i class="fa-solid fa-house"></i> {{ p.short_desc }}</span>
+            {% endif %}
+
+            <span>
+              <i class="fa-solid fa-tag"></i>
+              {% if p.category == 'other' and p.custom_type %}
+                {{ p.custom_type | capitalize }}
+              {% else %}
+                {{ p.category | capitalize }}
+              {% endif %}
+            </span>
+
+            {% if p.status %}
+            <span>
+              <i class="fa-solid fa-signal"></i>
+              {{ p.status | replace('-', ' ') | title }}
+            </span>
+            {% endif %}
           </div>
 
-          <div class="project-footer">
-            <div class="project-price">
-              <span class="label">From</span>
-              <span class="value">${{ "{:,}".format(p.price_from) }}</span>
-            </div>
-            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="project-learn">
-              Learn More <i class="fa-solid fa-arrow-right"></i>
+          <div class="nh-listing-bottom">
+            <span class="nh-listing-price">
+              {% if p.currency == 'USD' %}
+                ${{ "{:,}".format(p.price_from|int) }}
+              {% else %}
+                GHS {{ "{:,}".format(p.price_from|int) }}
+              {% endif %}
+            </span>
+            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="nh-listing-cta">
+              View Details
             </a>
           </div>
         </div>
 
       </article>
       {% endfor %}
-
     </div>
 
     {% else %}
 
-    <div class="empty-state">
+    <div class="nh-proj-empty">
       <i class="fa-solid fa-building"></i>
-      <h3>No projects yet</h3>
+      <h3>No properties yet</h3>
       <p>
         {% if active_category %}
-          There are no {{ active_category }} projects at the moment.
-          <a href="{{ url_for('projects') }}" style="color:var(--teal);font-weight:600;">View all projects →</a>
+          There are no {{ active_category }} properties at the moment.
+          <a href="{{ url_for('projects') }}">View all properties →</a>
         {% else %}
-          Projects will appear here once the admin adds them.
+          Properties will appear here once the admin adds them.
         {% endif %}
       </p>
     </div>
@@ -117,18 +168,27 @@
   </div>
 </section>
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      CTA BAND
-     ============================================================ -->
-<section class="section">
-  <div class="container">
-    <div class="cta-band">
-      <div class="cta-band-text">
-        <h3>Interested in one of our developments?</h3>
-        <p>Get in touch with our team to schedule a site visit or request the full brochure.</p>
-      </div>
-      <a href="{{ url_for('contact') }}" class="btn-primary">
-        <i class="fa-solid fa-envelope"></i> Contact Us
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-cta">
+  <div class="nh-cta-bg"></div>
+  <div class="nh-container nh-cta-inner">
+    <span class="nh-eyebrow nh-eyebrow-light">{{ site.cta_eyebrow or "Let's talk" }}</span>
+    <h2 class="nh-cta-title">
+      {{ site.cta_title or "Ready to find your" }}<br>
+      <em>{{ site.cta_title_em or "next address?" }}</em>
+    </h2>
+    <p class="nh-cta-sub">
+      {{ site.cta_sub or "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away." }}
+    </p>
+    <div class="nh-cta-actions">
+      <a href="{{ url_for('book') }}" class="nh-btn-round nh-btn-round-light">
+        {{ site.cta_btn_primary or "Book a consultation" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <a href="{{ url_for('contact') }}" class="nh-btn-round nh-btn-round-outline">
+        {{ site.cta_btn_secondary or "Contact us" }}
       </a>
     </div>
   </div>

@@ -1,15 +1,17 @@
 {% extends "update/base_update.html" %}
-{% block title %}Projects — Control Panel{% endblock %}
+{% block title %}Properties — Control Panel{% endblock %}
 
 {% block content %}
 
 <div class="update-page-head">
   <div>
-    <h1 class="update-page-title">Projects</h1>
-    <p class="update-page-sub">{{ projects|length }} project{{ 's' if projects|length != 1 }} in the catalog.</p>
+    <h1 class="update-page-title">Properties</h1>
+    <p class="update-page-sub">
+      {{ projects|length }} listing{{ 's' if projects|length != 1 }} in the catalog.
+    </p>
   </div>
   <a href="{{ url_for('update_project_new') }}" class="update-btn update-btn-primary">
-    <i class="fa-solid fa-plus"></i> Add Project
+    <i class="fa-solid fa-plus"></i> Add Property
   </a>
 </div>
 
@@ -21,11 +23,12 @@
       <tr>
         <th style="width:70px;">Image</th>
         <th>Name</th>
-        <th>Category</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Amount</th>
         <th>Location</th>
-        <th>Price</th>
         <th style="width:90px;">Featured</th>
-        <th style="width:120px;">Actions</th>
+        <th style="width:130px;">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -37,19 +40,50 @@
                  alt="{{ p.name }}">
           </div>
         </td>
+
         <td>
           <div class="update-cell-title">{{ p.name }}</div>
           <div class="update-cell-sub">/{{ p.slug }}</div>
         </td>
+
         <td>
-          <span class="update-pill update-pill-{{ p.category }}">
-            {{ p.category | capitalize }}
+          <span class="update-pill update-pill-category">
+            {% if p.category == 'other' and p.custom_type %}
+              {{ p.custom_type | capitalize }}
+            {% else %}
+              {{ p.category | capitalize }}
+            {% endif %}
           </span>
         </td>
-        <td>{{ p.location or "—" }}</td>
+
         <td>
-          <strong class="update-price">${{ "{:,}".format(p.price_from|int) }}</strong>
+          {% if p.status %}
+            <span class="update-pill update-pill-muted">
+              {{ p.status | replace('-', ' ') | title }}
+            </span>
+          {% else %}
+            <span class="update-cell-sub">—</span>
+          {% endif %}
         </td>
+
+        <td>
+          <strong class="update-price">
+            {% if p.currency == 'USD' %}
+              ${{ "{:,}".format(p.price_from|int) }}
+            {% else %}
+              GHS {{ "{:,}".format(p.price_from|int) }}
+            {% endif %}
+          </strong>
+        </td>
+
+        <td>
+          {% if p.location %}
+            {{ p.location }}
+          {% else %}
+            <span class="update-cell-sub">—</span>
+          {% endif %}
+        </td>
+
         <td>
           {% if p.featured %}
           <span class="update-pill update-pill-featured">
@@ -59,6 +93,7 @@
           <span class="update-pill update-pill-muted">No</span>
           {% endif %}
         </td>
+
         <td>
           <div class="update-row-actions">
             <a href="{{ url_for('update_project_edit', pid=p.id) }}"
@@ -67,9 +102,11 @@
             </a>
             <form method="POST"
                   action="{{ url_for('update_project_delete', pid=p.id) }}"
-                  onsubmit="return confirm('Delete this project?');"
+                  onsubmit="return confirm('Delete this property?');"
                   style="display:inline;">
-              <button type="submit" class="update-icon-btn update-icon-danger" title="Delete">
+              <button type="submit"
+                      class="update-icon-btn update-icon-danger"
+                      title="Delete">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </form>
@@ -85,10 +122,10 @@
 
 <div class="update-empty">
   <i class="fa-solid fa-building"></i>
-  <h3>No projects yet</h3>
-  <p>Click <strong>Add Project</strong> to create your first one.</p>
+  <h3>No properties yet</h3>
+  <p>Click <strong>Add Property</strong> to create your first listing.</p>
   <a href="{{ url_for('update_project_new') }}" class="update-btn update-btn-primary">
-    <i class="fa-solid fa-plus"></i> Add Project
+    <i class="fa-solid fa-plus"></i> Add Property
   </a>
 </div>
 

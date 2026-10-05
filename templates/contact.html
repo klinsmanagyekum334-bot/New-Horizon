@@ -1,149 +1,167 @@
 {% extends "base.html" %}
-{% block title %}Contact Us — {{ site.brand_name or "EstateDev" }}{% endblock %}
+{% block title %}Contact Us — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
 
 {% block content %}
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      PAGE HEADER
-     ============================================================ -->
+     ═══════════════════════════════════════════════════════ -->
 <section class="page-header">
   <div class="container">
     <h1 class="page-header-title">Contact Us</h1>
     <p class="page-header-sub">
-      Have a question about a project or want to learn more? Send us a message and
-      our team will get back to you shortly.
+      Type your message below, then choose how you'd like to send it —
+      WhatsApp or email. Either way, we'll get back to you shortly.
     </p>
   </div>
 </section>
 
-<!-- ============================================================
-     CONTACT SECTION
-     ============================================================ -->
+<!-- ═══════════════════════════════════════════════════════
+     MESSAGE COMPOSER
+     ═══════════════════════════════════════════════════════ -->
 <section class="section">
-  <div class="container contact-layout">
+  <div class="container">
+    <div class="contact-composer">
 
-    <!-- LEFT: contact info -->
-    <aside class="contact-info">
+      <div class="contact-composer-field">
+        <label for="cname">Your Name <span class="opt">(optional)</span></label>
+        <input type="text" id="cname"
+               placeholder="e.g. Appiah Enoch"
+               maxlength="80" autocomplete="name">
+      </div>
 
-      <h2 class="contact-info-heading">Get in Touch</h2>
-      <p class="contact-info-text">
-        Reach out to us through any of the channels below. We're available
-        Monday–Friday, 8am–6pm.
-      </p>
+      <div class="contact-composer-field">
+        <label for="cmessage">Your Message <span class="req">*</span></label>
+        <textarea id="cmessage" rows="9"
+                  placeholder="Tell us how we can help…"
+                  maxlength="2000"></textarea>
+      </div>
 
-      <ul class="contact-list">
-        <li>
-          <div class="contact-icon"><i class="fa-solid fa-phone"></i></div>
-          <div class="contact-body">
-            <span class="contact-label">Phone</span>
-            <a href="tel:{{ site.contact_phone or '0551234567' }}" class="contact-value">
-              {{ site.contact_phone or "055 123 4567" }}
-            </a>
-          </div>
-        </li>
-
-        <li>
-          <div class="contact-icon"><i class="fa-solid fa-envelope"></i></div>
-          <div class="contact-body">
-            <span class="contact-label">Email</span>
-            <a href="mailto:{{ site.contact_email or 'contact@estatedev.com' }}" class="contact-value">
-              {{ site.contact_email or "contact@estatedev.com" }}
-            </a>
-          </div>
-        </li>
-
-        <li>
-          <div class="contact-icon"><i class="fa-solid fa-location-dot"></i></div>
-          <div class="contact-body">
-            <span class="contact-label">Office</span>
-            <span class="contact-value">
-              {{ site.contact_address or "Airport City, Accra, Ghana" }}
-            </span>
-          </div>
-        </li>
-
-        <li>
-          <div class="contact-icon"><i class="fa-solid fa-clock"></i></div>
-          <div class="contact-body">
-            <span class="contact-label">Hours</span>
-            <span class="contact-value">
-              Mon–Fri: 8:00 AM – 6:00 PM<br>
-              Sat: 9:00 AM – 2:00 PM
-            </span>
-          </div>
-        </li>
-      </ul>
-
-    </aside>
-
-    <!-- RIGHT: form -->
-    <div class="contact-form-wrap">
-
-      <h2 class="contact-info-heading">Send a Message</h2>
-      <p class="contact-info-text">
-        Fill in the form and we'll be in touch as soon as possible.
-      </p>
-
-      <form method="POST" action="{{ url_for('contact') }}" class="contact-form">
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name">Full Name *</label>
-            <input type="text" id="name" name="name"
-                   placeholder="e.g. Kwame Mensah" required maxlength="80">
-          </div>
-          <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email"
-                   placeholder="you@example.com" maxlength="120">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="text" id="phone" name="phone"
-                   placeholder="e.g. 055 123 4567" maxlength="30">
-          </div>
-          <div class="form-group">
-            <label for="subject">Subject</label>
-            <input type="text" id="subject" name="subject"
-                   placeholder="e.g. Interested in East Legon Villas" maxlength="120">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="message">Your Message *</label>
-          <textarea id="message" name="message" rows="6"
-                    placeholder="Tell us how we can help..." required maxlength="2000"></textarea>
-        </div>
-
-        <button type="submit" class="form-submit">
-          <i class="fa-solid fa-paper-plane"></i> Send Message
+      <div class="contact-composer-actions">
+        <button type="button"
+                class="contact-send-btn contact-send-wa"
+                onclick="sendViaWhatsApp()">
+          <i class="fa-brands fa-whatsapp"></i>
+          <span>Send via WhatsApp</span>
         </button>
 
-      </form>
+        <button type="button"
+                class="contact-send-btn contact-send-email"
+                onclick="sendViaEmail()">
+          <i class="fa-solid fa-envelope"></i>
+          <span>Send via Email</span>
+        </button>
+      </div>
+
+      <p class="contact-composer-hint">
+        <i class="fa-solid fa-circle-info"></i>
+        Clicking a button opens WhatsApp or your email app with your message
+        already filled in — ready for you to press send.
+      </p>
 
     </div>
-
   </div>
 </section>
 
-<!-- ============================================================
-     MAP / VISIT US BAND
-     ============================================================ -->
+<!-- ═══════════════════════════════════════════════════════
+     QUICK CONTACT INFO
+     ═══════════════════════════════════════════════════════ -->
 <section class="section section-soft">
   <div class="container">
-    <div class="cta-band">
-      <div class="cta-band-text">
-        <h3>Prefer to talk on the phone?</h3>
-        <p>Call us directly or book a consultation and we'll come to you.</p>
-      </div>
-      <a href="{{ url_for('book') }}" class="btn-primary">
-        <i class="fa-solid fa-calendar-check"></i> Book a Consultation
+    <div class="contact-quick">
+
+      <a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}"
+         target="_blank" rel="noopener" class="contact-quick-item">
+        <div class="contact-quick-icon contact-quick-wa">
+          <i class="fa-brands fa-whatsapp"></i>
+        </div>
+        <div>
+          <span class="contact-quick-label">WhatsApp</span>
+          <strong>{{ site.contact_phone_display or "+233 24 344 4343" }}</strong>
+        </div>
       </a>
+
+      <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}"
+         class="contact-quick-item">
+        <div class="contact-quick-icon">
+          <i class="fa-solid fa-envelope"></i>
+        </div>
+        <div>
+          <span class="contact-quick-label">Email</span>
+          <strong>{{ site.contact_email or "info@newhorizongh.com" }}</strong>
+        </div>
+      </a>
+
+      <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}"
+         class="contact-quick-item">
+        <div class="contact-quick-icon">
+          <i class="fa-solid fa-phone"></i>
+        </div>
+        <div>
+          <span class="contact-quick-label">Call</span>
+          <strong>{{ site.contact_phone_display or "+233 24 344 4343" }}</strong>
+        </div>
+      </a>
+
+      <div class="contact-quick-item contact-quick-static">
+        <div class="contact-quick-icon">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div>
+          <span class="contact-quick-label">Office</span>
+          <strong>{{ site.location_address or "Tema Community 25, Ghana" }}</strong>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SEND HANDLERS — opens WhatsApp or the user's email app
+     ═══════════════════════════════════════════════════════ -->
+<script>
+  (function () {
+    const WHATSAPP_NUMBER = "{{ site.contact_whatsapp_num or '233243444343' }}";
+    const COMPANY_EMAIL   = "{{ site.contact_email or 'info@newhorizongh.com' }}";
+
+    function buildMessage() {
+      const name = (document.getElementById('cname').value || '').trim();
+      const msg  = (document.getElementById('cmessage').value || '').trim();
+
+      if (!msg) {
+        alert('Please type your message first.');
+        document.getElementById('cmessage').focus();
+        return null;
+      }
+
+      let text = 'Hello New Horizon,\n\n';
+      if (name) text += 'My name is ' + name + '.\n\n';
+      text += msg;
+
+      return { name: name, msg: msg, text: text };
+    }
+
+    window.sendViaWhatsApp = function () {
+      const data = buildMessage();
+      if (!data) return;
+      const url = 'https://wa.me/' + WHATSAPP_NUMBER +
+                  '?text=' + encodeURIComponent(data.text);
+      window.open(url, '_blank');
+    };
+
+    window.sendViaEmail = function () {
+      const data = buildMessage();
+      if (!data) return;
+      const subject = data.name
+        ? 'Enquiry from ' + data.name
+        : 'Enquiry from website';
+      const url = 'mailto:' + COMPANY_EMAIL +
+                  '?subject=' + encodeURIComponent(subject) +
+                  '&body=' + encodeURIComponent(data.text);
+      window.location.href = url;
+    };
+  })();
+</script>
 
 {% endblock %}

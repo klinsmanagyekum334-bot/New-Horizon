@@ -1,206 +1,247 @@
 {% extends "base.html" %}
 {% block title %}{{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+{% block header_class %}nh-header-overlay{% endblock %}
 
 {% block content %}
 
-<!-- ============================================================
-     HERO
-     ============================================================ -->
-<section class="hero">
-  <div class="hero-bg">
-    <img src="{{ site.hero_image or url_for('static', filename='uploads/image1.jpg') }}"
-         alt="Modern real estate development">
-  </div>
+<!-- ═══════════════════════════════════════════════════════
+     HERO — full-bleed image, About statement as headline
+     Every text below is editable in /update/site
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-hero" id="home">
+  <div class="nh-hero-bg"
+       style="background-image: url('{{ site.hero_image or "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2000&q=80" }}');"></div>
+  <div class="nh-hero-overlay"></div>
 
-  <div class="hero-overlay"></div>
+  <div class="nh-hero-inner">
+    <div class="nh-hero-grid">
 
-  <div class="hero-content-wrap">
-    <div class="hero-content">
+      <div class="nh-hero-left">
+        <span class="nh-hero-eyebrow">{{ site.hero_eyebrow or "About New Horizon" }}</span>
 
-      <h1 class="hero-title">
-        <span class="hl-yellow">{{ site.hero_title_l1 or "Plan" }}</span><br>
-        {{ site.hero_title_l2 or "A perfect" }}<br>
-        {{ site.hero_title_l3 or "Home for" }}<br>
-        Your <span class="hl-yellow">{{ site.hero_title_l4 or "family" }}</span>
-      </h1>
+        <h1 class="nh-hero-title nh-hero-title-about">
+          {{ site.hero_title or "New Horizon is a company which deals with" }}<br>
+          <em>{{ site.hero_title_em or "Real Estate & Pharmaceutical products." }}</em>
+        </h1>
 
-      <p class="hero-subtitle">
-        {{ site.hero_subtitle or "Most trusted Agency in Ghana" }}
-      </p>
+        <p class="nh-hero-sub">
+          {{ site.hero_subtitle or "Most trusted Agency in Ghana" }}
+        </p>
+      </div>
 
-      <div class="hero-buttons">
-        <a href="{{ url_for('projects') }}" class="btn-primary">
-          {{ site.hero_cta_text or "Explore Projects" }} <i class="fa-solid fa-arrow-right"></i>
-        </a>
+      <div class="nh-hero-right">
+        <ul class="nh-hero-list">
+          <li>
+            <span>{{ site.hero_meta_1_key or "24/7" }}</span>
+            {{ site.hero_meta_1_val or "Client Support" }}
+          </li>
+          <li>
+            <span>{{ site.hero_meta_2_key or "FDA" }}</span>
+            {{ site.hero_meta_2_val or "Ghana Licensed" }}
+          </li>
+          <li>
+            <span>{{ site.hero_meta_3_key or "16" }}</span>
+            {{ site.hero_meta_3_val or "Regions Covered" }}
+          </li>
+          <li>
+            <span>{{ site.hero_meta_4_key or "Est." }}</span>
+            {{ site.hero_meta_4_val or "2017 · Tema" }}
+          </li>
+        </ul>
       </div>
 
     </div>
-  </div>
-</section>
 
-<!-- ============================================================
-     OUR SERVICES STRIP
-     ============================================================ -->
-<section class="services-strip">
-  <div class="container">
-    <div class="services-strip-inner">
-
-      <span class="services-title">{{ site.services_heading or "[ Our Services ]" }}</span>
-
-      {% set services_list = (site.services_items or "").split('\n') %}
-      {% for item in services_list %}
-        {% if item.strip() %}
-          <span class="services-arrow">>></span>
-          <span class="services-item {% if loop.last %}services-item-highlight{% endif %}">
-            {{ item.strip() }}
-          </span>
-        {% endif %}
-      {% endfor %}
-
+    <!-- Floating filter pills -->
+    <div class="nh-hero-pills">
+      <a href="#estates" class="nh-pill">
+        <small>{{ site.hero_pill_1_small or "Division 01" }}</small>
+        <b>{{ site.hero_pill_1_main or "Real Estate" }}</b>
+        <i class="fa-solid fa-house-chimney-window"></i>
+      </a>
+      <a href="#pharma" class="nh-pill">
+        <small>{{ site.hero_pill_2_small or "Division 02" }}</small>
+        <b>{{ site.hero_pill_2_main or "Pharmaceuticals" }}</b>
+        <i class="fa-solid fa-prescription-bottle-medical"></i>
+      </a>
+      <a href="{{ url_for('projects') }}" class="nh-pill">
+        <small>{{ site.hero_pill_3_small or "Explore" }}</small>
+        <b>{{ site.hero_pill_3_main or "All Projects" }}</b>
+        <i class="fa-solid fa-compass"></i>
+      </a>
+      <a href="{{ url_for('gallery_page') }}" class="nh-pill">
+        <small>{{ site.hero_pill_4_small or "See" }}</small>
+        <b>{{ site.hero_pill_4_main or "Gallery" }}</b>
+        <i class="fa-solid fa-images"></i>
+      </a>
+      <a href="{{ url_for('about') }}" class="nh-pill nh-pill-cta">
+        <b>{{ site.hero_pill_cta or "About New Horizon" }}</b>
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- ============================================================
-     VIDEO SECTION
-     ============================================================ -->
-<section class="video-section">
-  <div class="container">
+{% if featured_video and featured_video.filename %}
+<!-- ═══════════════════════════════════════════════════════
+     FEATURED VIDEO BAND
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-video-band">
+  <div class="nh-container">
 
-    <div class="section-head-center">
-      <h2 class="section-title">{{ site.video_section_heading or "Watch Our Story" }}</h2>
-      <p class="section-subtitle">
+    <div class="nh-video-band-head">
+      <span class="nh-video-band-eyebrow">
+        <i class="fa-solid fa-circle-play"></i>
+        {{ site.video_section_heading or "Watch Our Story" }}
+      </span>
+      <h2 class="nh-video-band-title">
         {{ site.video_section_subheading or "See our developments come to life." }}
-      </p>
+      </h2>
     </div>
 
-    <div class="video-card">
-      {# 
-        Supabase migration: 
-        The filename field now contains the full public URL from Supabase Storage.
-        We no longer prefix it with /static/videos/.
-      #}
-      {% set video_src = featured_video.filename if featured_video and featured_video.filename else '' %}
+    <div class="nh-video-band-card">
+      <video class="nh-video-band-player"
+             controls
+             preload="metadata"
+             poster="{{ site.hero_image or '' }}">
+        <source src="{{ featured_video.filename }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
 
-      {% if video_src %}
-        <video
-          class="video-player"
-          controls
-          preload="metadata"
-          poster="{{ site.hero_image or url_for('static', filename='uploads/image1.jpg') }}">
-          <source src="{{ video_src }}" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-
-        <div class="video-overlay-bar">
-          <div class="video-meta">
-            <h3>{{ featured_video.title if featured_video else "New Horizon Showreel" }}</h3>
-            <p>{{ featured_video.description if featured_video and featured_video.description else "A glimpse into our latest residential and commercial developments." }}</p>
-          </div>
-          <a href="{{ url_for('videos_page') }}" class="video-more-btn">
-            More Videos <i class="fa-solid fa-arrow-right"></i>
-          </a>
+      <div class="nh-video-band-meta">
+        <div>
+          <h3>{{ featured_video.title }}</h3>
+          {% if featured_video.description %}
+          <p>{{ featured_video.description }}</p>
+          {% endif %}
         </div>
-      {% else %}
-        <div class="video-placeholder" style="padding: 60px 20px; text-align: center; background: #f8f9fa; border-radius: 12px; border: 1px dashed #ccc;">
-          <i class="fa-solid fa-video-slash" style="font-size: 2.5rem; color: #adb5bd; margin-bottom: 15px; display: block;"></i>
-          <h3 style="color: #495057; margin-bottom: 8px;">No Video Uploaded Yet</h3>
-          <p style="color: #6c757d;">Go to the admin panel to upload a showreel or featured video.</p>
-        </div>
-      {% endif %}
-    </div>
-
-  </div>
-</section>
-
-<!-- ============================================================
-     CAROUSEL
-     ============================================================ -->
-{% if carousel_projects %}
-<section class="carousel-section">
-  <div class="container">
-
-    <div class="carousel-wrap">
-      <button class="carousel-arrow carousel-prev" aria-label="Previous" id="carouselPrev">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-
-      <div class="carousel-track" id="carouselTrack">
-
-        {% for p in carousel_projects %}
-        <article class="project-card carousel-card">
-          <a href="{{ url_for('project_detail', slug=p.slug) }}" class="carousel-card-link">
-
-            <div class="project-image">
-              <span class="project-badge badge-{{ p.status }}">
-                {{ p.status | replace('-', ' ') | title }}
-              </span>
-              <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
-                   alt="{{ p.name }}">
-            </div>
-
-            <div class="carousel-body">
-              <h3 class="carousel-title">{{ p.name }}</h3>
-              <p class="carousel-price">${{ "{:,}".format(p.price_from|int) }}</p>
-            </div>
-
-          </a>
-        </article>
-        {% endfor %}
-
-        <a href="{{ url_for('projects') }}" class="project-card carousel-more-card">
-          <div class="more-card-inner">
-            <i class="fa-solid fa-arrow-right"></i>
-            <h3>More</h3>
-          </div>
+        <a href="{{ url_for('videos_page') }}" class="nh-video-band-more">
+          All videos <i class="fa-solid fa-arrow-right"></i>
         </a>
-
       </div>
-
-      <button class="carousel-arrow carousel-next" aria-label="Next" id="carouselNext">
-        <i class="fa-solid fa-chevron-right"></i>
-      </button>
     </div>
 
   </div>
 </section>
 {% endif %}
 
-<!-- ============================================================
-     FULL GRID
-     ============================================================ -->
-{% if grid_projects %}
-<section class="section section-white">
-  <div class="container">
+<!-- ═══════════════════════════════════════════════════════
+     ESTATES — orange listings section with dynamic filters
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-listings" id="estates">
+  <div class="nh-container">
 
-    <div class="projects-grid">
-      {% for p in grid_projects %}
-      <article class="project-card">
+    <div class="nh-listings-head">
+      <h2 class="nh-listings-title">
+        {{ site.estates_title or "NEW HORIZON" }}
+        <em>{{ site.estates_title_em or "REAL ESTATES" }}</em>
+      </h2>
+      <p class="nh-listings-sub">{{ site.estates_sub or "We have the following" }}</p>
+    </div>
 
-        <div class="project-image">
-          <span class="project-badge badge-{{ p.status }}">
-            {{ p.category | capitalize }} • {{ p.status | replace('-', ' ') | title }}
+    <!-- Base chips + dynamic custom-type chips -->
+    <div class="nh-listings-filters" role="tablist">
+      <a href="#estates" class="nh-chip active">{{ site.estates_chip_all or "All" }}</a>
+      <a href="{{ url_for('commercial') }}" class="nh-chip">{{ site.estates_chip_commercial or "Commercial" }}</a>
+      <a href="{{ url_for('residentials') }}" class="nh-chip">{{ site.estates_chip_residential or "Residential" }}</a>
+      <a href="{{ url_for('gallery_page') }}" class="nh-chip">{{ site.estates_chip_gallery or "Gallery" }}</a>
+      <a href="{{ url_for('projects') }}" class="nh-chip">{{ site.estates_chip_estates or "Estates" }}</a>
+      <a href="{{ url_for('contact') }}" class="nh-chip">{{ site.estates_chip_build or "Building & Construction" }}</a>
+
+      {% if custom_types %}
+        {% for ct in custom_types %}
+        <a href="{{ url_for('projects') }}?type={{ ct | urlencode }}"
+           class="nh-chip nh-chip-custom">
+          {{ ct | capitalize }}
+        </a>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    {% if grid_projects %}
+    <div class="nh-listings-grid">
+      {% for p in grid_projects[:6] %}
+      <article class="nh-listing-card">
+
+        <div class="nh-listing-media">
+          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/800/500' }}"
+               alt="{{ p.name }}" loading="lazy">
+
+          {% if p.featured %}
+          <span class="nh-listing-badge nh-listing-badge-featured">
+            <i class="fa-solid fa-star"></i> Featured
           </span>
-          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
-               alt="{{ p.name }}">
+          {% else %}
+          <span class="nh-listing-badge nh-listing-badge-verified">
+            <i class="fa-solid fa-circle-check"></i> Verified
+          </span>
+          {% endif %}
+
+          {% if p.video %}
+          <button type="button"
+                  class="nh-listing-video-badge"
+                  onclick="nhPlayVideo('{{ p.video }}', '{{ p.name | e }}'); event.preventDefault(); event.stopPropagation();">
+            <i class="fa-solid fa-circle-play"></i> Video
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('project_detail', slug=p.slug) }}"
+             class="nh-listing-fav" aria-label="Save">
+            <i class="fa-regular fa-heart"></i>
+          </a>
+
+          <span class="nh-listing-cat">
+            {% if p.category == 'other' and p.custom_type %}
+              {{ p.custom_type | upper }}
+            {% else %}
+              {{ p.category | upper }}
+            {% endif %}
+            {% if p.status %} · {{ p.status | replace('-', ' ') | upper }}{% endif %}
+          </span>
         </div>
 
-        <div class="project-body">
-          <h3 class="project-name">{{ p.name }}</h3>
-          <p class="project-desc">{{ p.short_desc }}</p>
+        <div class="nh-listing-body">
+          <h3 class="nh-listing-name">{{ p.name }}</h3>
 
-          <div class="project-meta">
+          {% if p.location %}
+          <p class="nh-listing-loc">
             <i class="fa-solid fa-location-dot"></i>
-            <span>{{ p.location }}{% if p.units %} • {{ p.units }}{% endif %}</span>
+            {{ p.location }}
+          </p>
+          {% endif %}
+
+          <div class="nh-listing-amen">
+            {% if p.short_desc %}
+            <span><i class="fa-solid fa-house"></i> {{ p.short_desc }}</span>
+            {% endif %}
+
+            <span>
+              <i class="fa-solid fa-tag"></i>
+              {% if p.category == 'other' and p.custom_type %}
+                {{ p.custom_type | capitalize }}
+              {% else %}
+                {{ p.category | capitalize }}
+              {% endif %}
+            </span>
+
+            {% if p.status %}
+            <span>
+              <i class="fa-solid fa-signal"></i>
+              {{ p.status | replace('-', ' ') | title }}
+            </span>
+            {% endif %}
           </div>
 
-          <div class="project-footer">
-            <div class="project-price">
-              <span class="label">From</span>
-              <span class="value">${{ "{:,}".format(p.price_from|int) }}</span>
-            </div>
-            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="project-learn">
-              Learn More <i class="fa-solid fa-arrow-right"></i>
+          <div class="nh-listing-bottom">
+            <span class="nh-listing-price">
+              {% if p.currency == 'USD' %}
+                ${{ "{:,}".format(p.price_from|int) }}
+              {% else %}
+                GHS {{ "{:,}".format(p.price_from|int) }}
+              {% endif %}
+            </span>
+            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="nh-listing-cta">
+              View Details
             </a>
           </div>
         </div>
@@ -209,89 +250,206 @@
       {% endfor %}
     </div>
 
+    <div class="nh-listings-more">
+      <a href="{{ url_for('projects') }}" class="nh-listings-more-btn">
+        {{ site.estates_cta or "See all properties" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+    {% endif %}
+
   </div>
 </section>
-{% endif %}
 
-<!-- ============================================================
-     CONTACT + LOCATION
-     ============================================================ -->
-<section class="contact-section" id="contact-section">
-  <div class="container">
+<!-- ═══════════════════════════════════════════════════════
+     PHARMA — green & white listings section, DB-driven
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-pharma-listing" id="pharma">
+  <div class="nh-container">
 
-    <div class="contact-section-head">
-      <span class="contact-eyebrow">GET IN TOUCH</span>
-      <h2 class="contact-section-title">{{ site.contact_heading or "Contact Us" }}</h2>
-      <p class="contact-section-sub">
-        {{ site.contact_subheading or "We're here to help — reach out anytime." }}
-      </p>
+    <div class="nh-pharma-head">
+      <h2 class="nh-pharma-title">
+        {{ site.pharma_title or "NEW HORIZON" }}
+        <em>{{ site.pharma_title_em or "PHARMACEUTICALS" }}</em>
+      </h2>
+      <p class="nh-pharma-sub">{{ site.pharma_sub or "We stock the following" }}</p>
     </div>
 
-    <div class="contact-cards">
-
-      <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}" class="contact-card">
-        <div class="contact-card-icon">
-          <i class="fa-solid fa-envelope"></i>
-        </div>
-        <h3>Email</h3>
-        <p>{{ site.contact_email or "info@newhorizongh.com" }}</p>
-        <span class="contact-card-action">Tap to send email <i class="fa-solid fa-arrow-right"></i></span>
+    <!-- Filter chips — pulled from admin-managed drug types -->
+    <div class="nh-pharma-filters" role="tablist">
+      <a href="#pharma" class="nh-pharma-chip active">
+        {{ site.pharma_chip_all or "All" }}
       </a>
-
-      <a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}?text={{ 'Hello New Horizon! I would like to make an enquiry.' | urlencode }}"
-         target="_blank" class="contact-card contact-card-wa">
-        <div class="contact-card-icon">
-          <i class="fa-brands fa-whatsapp"></i>
-        </div>
-        <h3>WhatsApp</h3>
-        <p>{{ site.contact_phone_display or "+233 24 344 4343" }}</p>
-        <span class="contact-card-action">Tap to chat now <i class="fa-solid fa-arrow-right"></i></span>
-      </a>
-
-      <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}" class="contact-card">
-        <div class="contact-card-icon">
-          <i class="fa-solid fa-phone"></i>
-        </div>
-        <h3>Call</h3>
-        <p>{{ site.contact_phone_display or "+233 24 344 4343" }}</p>
-        <span class="contact-card-action">Tap to dial <i class="fa-solid fa-arrow-right"></i></span>
-      </a>
-
-    </div>
-
-    <div class="location-card">
-      <div class="location-card-icon">
-        <i class="fa-solid fa-location-dot"></i>
-      </div>
-      <div class="location-card-body">
-        <h3>{{ site.location_heading or "Our Location" }}</h3>
-        <p>{{ site.location_address or "Tema Community 25, Ghana" }}</p>
-        <a href="{{ site.location_maps_url or 'https://www.google.com/maps/search/?api=1&query=Tema+Community+25+Ghana' }}"
-           target="_blank"
-           class="location-map-btn">
-          <i class="fa-solid fa-map-location-dot"></i> Open in Google Maps
+      {% if drug_types %}
+        {% for t in drug_types %}
+        <a href="{{ url_for('drugs_page') }}?type={{ t | urlencode }}"
+           class="nh-pharma-chip">
+          {{ t }}
         </a>
-      </div>
+        {% endfor %}
+      {% endif %}
     </div>
+
+    {% if drugs %}
+    <div class="nh-pharma-grid-2">
+      {% for d in drugs[:6] %}
+      <article class="nh-med-card">
+
+        <div class="nh-med-media">
+          <img src="{{ d.image if d.image else 'https://picsum.photos/seed/' ~ d.slug ~ '/800/500' }}"
+               alt="{{ d.name }}" loading="lazy">
+
+          {% if d.drug_type %}
+          <span class="nh-med-badge
+                       {% if 'pain' in d.drug_type|lower %}nh-med-badge-otc
+                       {% elif 'herbal' in d.drug_type|lower %}nh-med-badge-herbal
+                       {% elif 'prescri' in d.drug_type|lower %}nh-med-badge-rx
+                       {% elif 'supplement' in d.drug_type|lower %}nh-med-badge-wellness
+                       {% else %}nh-med-badge-device{% endif %}">
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+            {{ d.drug_type }}
+          </span>
+          {% endif %}
+
+          <a href="{{ url_for('drugs_page') }}" class="nh-med-fav" aria-label="Save">
+            <i class="fa-regular fa-heart"></i>
+          </a>
+        </div>
+
+        <div class="nh-med-body">
+          <h3 class="nh-med-name">{{ d.name }}</h3>
+
+          {% if d.drug_type %}
+          <p class="nh-med-mfr">
+            <i class="fa-solid fa-tag"></i>
+            {{ d.drug_type }}
+          </p>
+          {% endif %}
+
+          {% if d.description %}
+          <div class="nh-med-info">
+            <span style="background: transparent; border: none; padding: 0; font-size: 14px; line-height: 1.6; color: var(--ph-ink-2);">
+              {{ d.description }}
+            </span>
+          </div>
+          {% endif %}
+
+          <div class="nh-med-bottom">
+            <span class="nh-med-price">
+              {% if d.currency == 'USD' %}
+                ${{ "{:,}".format(d.price|int) }}
+              {% else %}
+                GHS {{ "{:,}".format(d.price|int) }}
+              {% endif %}
+            </span>
+            <a href="{{ url_for('drugs_page') }}" class="nh-med-cta">
+              Order <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="nh-pharma-more">
+      <a href="{{ url_for('drugs_page') }}" class="nh-pharma-more-btn">
+        {{ site.pharma_cta or "Request full catalogue" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    {% else %}
+
+    <div class="nh-pharma-empty">
+      <i class="fa-solid fa-prescription-bottle-medical"></i>
+      <h3>No products yet</h3>
+      <p>Products will appear here once the admin adds them.</p>
+    </div>
+
+    {% endif %}
 
   </div>
 </section>
 
-<!-- ============================================================
-     CTA BAND
-     ============================================================ -->
-<section class="section">
-  <div class="container">
-    <div class="cta-band">
-      <div class="cta-band-text">
-        <h3>Ready to find your next home or business space?</h3>
-        <p>Book a free consultation with our team and let's bring your vision to life.</p>
-      </div>
-      <a href="{{ url_for('book') }}" class="btn-primary">
-        <i class="fa-solid fa-phone"></i> Book Consultation
+<!-- ═══════════════════════════════════════════════════════
+     CTA — deep orange band
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-cta">
+  <div class="nh-cta-bg"></div>
+  <div class="nh-container nh-cta-inner">
+    <span class="nh-eyebrow nh-eyebrow-light">{{ site.cta_eyebrow or "Let's talk" }}</span>
+    <h2 class="nh-cta-title">
+      {{ site.cta_title or "Ready to find your" }}<br>
+      <em>{{ site.cta_title_em or "next address?" }}</em>
+    </h2>
+    <p class="nh-cta-sub">
+      {{ site.cta_sub or "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away." }}
+    </p>
+    <div class="nh-cta-actions">
+      <a href="{{ url_for('book') }}" class="nh-btn-round nh-btn-round-light">
+        {{ site.cta_btn_primary or "Book a consultation" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <a href="{{ url_for('contact') }}" class="nh-btn-round nh-btn-round-outline">
+        {{ site.cta_btn_secondary or "Contact us" }}
       </a>
     </div>
   </div>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════
+     VIDEO LIGHTBOX — plays a project video inline
+     ═══════════════════════════════════════════════════════ -->
+<div class="nh-vlb" id="nhVlb" aria-hidden="true" onclick="nhCloseVideo(event)">
+  <button type="button" class="nh-vlb-close" onclick="nhCloseVideo(event)" aria-label="Close">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="nh-vlb-stage" onclick="event.stopPropagation();">
+    <video class="nh-vlb-player" id="nhVlbPlayer" controls preload="metadata">
+      <source src="" type="video/mp4">
+    </video>
+    <p class="nh-vlb-caption" id="nhVlbCaption"></p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const vlb     = document.getElementById('nhVlb');
+    const player  = document.getElementById('nhVlbPlayer');
+    const caption = document.getElementById('nhVlbCaption');
+
+    window.nhPlayVideo = function (url, name) {
+      if (!vlb || !player) return;
+      const src = player.querySelector('source');
+      if (src) src.src = url;
+      player.load();
+      if (caption) caption.textContent = name || '';
+      vlb.classList.add('open');
+      vlb.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => player.play().catch(() => {}), 100);
+    };
+
+    window.nhCloseVideo = function (ev) {
+      if (ev) ev.stopPropagation();
+      if (!vlb) return;
+      vlb.classList.remove('open');
+      vlb.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && vlb && vlb.classList.contains('open')) {
+        nhCloseVideo();
+      }
+    });
+  })();
+</script>
 
 {% endblock %}

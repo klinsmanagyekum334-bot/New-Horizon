@@ -1,164 +1,305 @@
 {% extends "base.html" %}
-{% block title %}{{ project.name }} — {{ site.brand_name or "EstateDev" }}{% endblock %}
+{% block title %}{{ project.name }} — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
 
 {% block content %}
 
-<!-- ============================================================
-     HERO IMAGE
-     ============================================================ -->
-<section class="project-detail-hero">
-  <img src="{{ project.hero_image if project.hero_image else (project.image if project.image else 'https://picsum.photos/seed/' ~ project.slug ~ '/1600/900') }}"
-       alt="{{ project.name }}">
-  <div class="project-detail-hero-overlay"></div>
+<!-- ═══════════════════════════════════════════════════════
+     HERO — full-bleed image with title overlay
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-pd-hero">
+  <img src="{{ project.hero_image or project.image or ('https://picsum.photos/seed/' ~ project.slug ~ '/1600/900') }}"
+       alt="{{ project.name }}"
+       class="nh-pd-hero-img">
+  <div class="nh-pd-hero-overlay"></div>
 
-  <div class="container project-detail-hero-inner">
-    <a href="{{ url_for('projects') }}" class="back-link">
-      <i class="fa-solid fa-arrow-left"></i> Back to Projects
+  <div class="nh-container nh-pd-hero-inner">
+
+    <a href="{{ url_for('projects') }}" class="nh-pd-back">
+      <i class="fa-solid fa-arrow-left"></i> Back to Properties
     </a>
 
-    <span class="project-badge badge-{{ project.status }} hero-badge">
-      {{ project.category | capitalize }} • {{ project.status | replace('-', ' ') | title }}
-    </span>
-
-    <h1 class="project-detail-title">{{ project.name }}</h1>
-
-    <div class="project-detail-meta">
-      <span><i class="fa-solid fa-location-dot"></i> {{ project.location }}</span>
-      {% if project.units %}
-      <span><i class="fa-solid fa-house"></i> {{ project.units }}</span>
+    <div class="nh-pd-hero-badges">
+      {% if project.featured %}
+        <span class="nh-pd-badge nh-pd-badge-featured">
+          <i class="fa-solid fa-star"></i> Featured
+        </span>
+      {% else %}
+        <span class="nh-pd-badge nh-pd-badge-verified">
+          <i class="fa-solid fa-circle-check"></i> Verified
+        </span>
       {% endif %}
-      <span><i class="fa-solid fa-tag"></i> From ${{ "{:,}".format(project.price_from) }}</span>
+
+      <span class="nh-pd-badge nh-pd-badge-cat">
+        {% if project.category == 'other' and project.custom_type %}
+          {{ project.custom_type | upper }}
+        {% else %}
+          {{ project.category | upper }}
+        {% endif %}
+        {% if project.status %} · {{ project.status | replace('-', ' ') | upper }}{% endif %}
+      </span>
     </div>
+
+    <h1 class="nh-pd-title">{{ project.name }}</h1>
+
+    <div class="nh-pd-hero-meta">
+      {% if project.location %}
+      <span><i class="fa-solid fa-location-dot"></i> {{ project.location }}</span>
+      {% endif %}
+      {% if project.short_desc %}
+      <span><i class="fa-solid fa-house"></i> {{ project.short_desc }}</span>
+      {% endif %}
+      {% if project.price_from %}
+      <span>
+        <i class="fa-solid fa-tag"></i>
+        From
+        {% if project.currency == 'USD' %}
+          ${{ "{:,}".format(project.price_from|int) }}
+        {% else %}
+          GHS {{ "{:,}".format(project.price_from|int) }}
+        {% endif %}
+      </span>
+      {% endif %}
+    </div>
+
   </div>
 </section>
 
-<!-- ============================================================
+{% if project.video %}
+<!-- ═══════════════════════════════════════════════════════
+     PROJECT VIDEO
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-pd-video">
+  <div class="nh-container">
+    <div class="nh-pd-video-card">
+      <video class="nh-pd-video-player" controls preload="metadata"
+             poster="{{ project.hero_image or project.image or '' }}">
+        <source src="{{ project.video }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ═══════════════════════════════════════════════════════
      MAIN CONTENT
-     ============================================================ -->
-<section class="section">
-  <div class="container project-detail-layout">
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-pd-content">
+  <div class="nh-container nh-pd-layout">
 
-    <!-- LEFT: description + details -->
-    <div class="project-detail-main">
+    <!-- LEFT -->
+    <div class="nh-pd-main">
 
-      <div class="detail-block">
-        <h2 class="detail-heading">About This Project</h2>
-        <p class="detail-text">{{ project.long_desc }}</p>
+      <div class="nh-pd-block">
+        <h2 class="nh-pd-heading">About This Property</h2>
+        <p class="nh-pd-text">
+          {{ project.long_desc or project.short_desc or "Details coming soon." }}
+        </p>
       </div>
 
-      <div class="detail-block">
-        <h2 class="detail-heading">Project Details</h2>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <span class="detail-label">Category</span>
-            <span class="detail-value">{{ project.category | capitalize }}</span>
+      <div class="nh-pd-block">
+        <h2 class="nh-pd-heading">Property Details</h2>
+
+        <div class="nh-pd-detail-grid">
+
+          <div class="nh-pd-detail-item">
+            <span class="nh-pd-detail-label">Type</span>
+            <span class="nh-pd-detail-value">
+              {% if project.category == 'other' and project.custom_type %}
+                {{ project.custom_type | capitalize }}
+              {% else %}
+                {{ project.category | capitalize }}
+              {% endif %}
+            </span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Status</span>
-            <span class="detail-value">{{ project.status | replace('-', ' ') | title }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Location</span>
-            <span class="detail-value">{{ project.location }}</span>
-          </div>
-          {% if project.units %}
-          <div class="detail-item">
-            <span class="detail-label">Units Available</span>
-            <span class="detail-value">{{ project.units }}</span>
+
+          {% if project.status %}
+          <div class="nh-pd-detail-item">
+            <span class="nh-pd-detail-label">Status</span>
+            <span class="nh-pd-detail-value">
+              {{ project.status | replace('-', ' ') | title }}
+            </span>
           </div>
           {% endif %}
-          <div class="detail-item">
-            <span class="detail-label">Price From</span>
-            <span class="detail-value">${{ "{:,}".format(project.price_from) }}</span>
+
+          {% if project.location %}
+          <div class="nh-pd-detail-item">
+            <span class="nh-pd-detail-label">Location</span>
+            <span class="nh-pd-detail-value">{{ project.location }}</span>
           </div>
+          {% endif %}
+
+          {% if project.units %}
+          <div class="nh-pd-detail-item">
+            <span class="nh-pd-detail-label">Units Available</span>
+            <span class="nh-pd-detail-value">{{ project.units }}</span>
+          </div>
+          {% endif %}
+
+          {% if project.price_from %}
+          <div class="nh-pd-detail-item">
+            <span class="nh-pd-detail-label">Price From</span>
+            <span class="nh-pd-detail-value nh-pd-price">
+              {% if project.currency == 'USD' %}
+                ${{ "{:,}".format(project.price_from|int) }}
+              {% else %}
+                GHS {{ "{:,}".format(project.price_from|int) }}
+              {% endif %}
+            </span>
+          </div>
+          {% endif %}
+
+          {% if project.short_desc %}
+          <div class="nh-pd-detail-item">
+            <span class="nh-pd-detail-label">Description</span>
+            <span class="nh-pd-detail-value">{{ project.short_desc }}</span>
+          </div>
+          {% endif %}
+
         </div>
       </div>
 
     </div>
 
-    <!-- RIGHT: sidebar CTA -->
-    <aside class="project-detail-side">
-      <div class="side-card">
-        <h3 class="side-card-title">Interested?</h3>
-        <p class="side-card-text">
+    <!-- RIGHT — sidebar CTA -->
+    <aside class="nh-pd-side">
+      <div class="nh-pd-side-card">
+
+        <h3 class="nh-pd-side-title">Interested in this property?</h3>
+        <p class="nh-pd-side-text">
           Contact our sales team for pricing, availability, site visits and full brochures.
         </p>
 
-        <a href="{{ url_for('book') }}" class="side-btn side-btn-primary">
+        <a href="{{ url_for('book') }}" class="nh-pd-side-btn nh-pd-side-btn-primary">
           <i class="fa-solid fa-phone"></i> Book a Consultation
         </a>
 
-        <a href="{{ url_for('contact') }}" class="side-btn side-btn-outline">
+        <a href="{{ url_for('contact') }}" class="nh-pd-side-btn nh-pd-side-btn-outline">
           <i class="fa-solid fa-envelope"></i> Send an Enquiry
         </a>
 
-        <div class="side-divider"></div>
+        <div class="nh-pd-side-divider"></div>
 
-        <ul class="side-contact">
+        <ul class="nh-pd-side-contact">
           <li>
             <i class="fa-solid fa-phone"></i>
-            <a href="tel:{{ site.contact_phone or '0551234567' }}">
-              {{ site.contact_phone or "055 123 4567" }}
+            <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}">
+              {{ site.contact_phone_display or "+233 24 344 4343" }}
             </a>
           </li>
           <li>
             <i class="fa-solid fa-envelope"></i>
-            <a href="mailto:{{ site.contact_email or 'contact@estatedev.com' }}">
-              {{ site.contact_email or "contact@estatedev.com" }}
+            <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}">
+              {{ site.contact_email or "info@newhorizongh.com" }}
             </a>
           </li>
           <li>
             <i class="fa-solid fa-location-dot"></i>
-            {{ site.contact_address or "Airport City, Accra, Ghana" }}
+            {{ site.location_address or "Tema Community 25, Ghana" }}
           </li>
         </ul>
+
       </div>
     </aside>
 
   </div>
 </section>
 
-<!-- ============================================================
-     RELATED PROJECTS
-     ============================================================ -->
+<!-- ═══════════════════════════════════════════════════════
+     RELATED PROPERTIES
+     ═══════════════════════════════════════════════════════ -->
 {% if related %}
-<section class="section section-soft">
-  <div class="container">
+<section class="nh-pd-related">
+  <div class="nh-container">
 
-    <div class="section-head-center">
-      <h2 class="section-title">Other {{ project.category | capitalize }} Projects</h2>
-      <p class="section-subtitle">Explore more of our developments.</p>
+    <div class="nh-pd-related-head">
+      <h2 class="nh-pd-related-title">
+        Other
+        {% if project.category == 'other' and project.custom_type %}
+          {{ project.custom_type | capitalize }}
+        {% else %}
+          {{ project.category | capitalize }}
+        {% endif %}
+        Properties
+      </h2>
+      <p class="nh-pd-related-sub">Explore more of our developments.</p>
     </div>
 
-    <div class="projects-grid">
+    <div class="nh-listings-grid">
       {% for p in related %}
         {% if p.slug != project.slug %}
-        <article class="project-card">
+        <article class="nh-listing-card">
 
-          <div class="project-image">
-            <span class="project-badge badge-{{ p.status }}">
-              {{ p.category | capitalize }} • {{ p.status | replace('-', ' ') | title }}
+          <div class="nh-listing-media">
+            <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/800/500' }}"
+                 alt="{{ p.name }}" loading="lazy">
+
+            {% if p.featured %}
+            <span class="nh-listing-badge nh-listing-badge-featured">
+              <i class="fa-solid fa-star"></i> Featured
             </span>
-            <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
-                 alt="{{ p.name }}">
+            {% else %}
+            <span class="nh-listing-badge nh-listing-badge-verified">
+              <i class="fa-solid fa-circle-check"></i> Verified
+            </span>
+            {% endif %}
+
+            {% if p.video %}
+            <span class="nh-listing-video-badge">
+              <i class="fa-solid fa-circle-play"></i> Video
+            </span>
+            {% endif %}
+
+            <a href="{{ url_for('project_detail', slug=p.slug) }}"
+               class="nh-listing-fav" aria-label="Save">
+              <i class="fa-regular fa-heart"></i>
+            </a>
+
+            <span class="nh-listing-cat">
+              {% if p.category == 'other' and p.custom_type %}
+                {{ p.custom_type | upper }}
+              {% else %}
+                {{ p.category | upper }}
+              {% endif %}
+              {% if p.status %} · {{ p.status | replace('-', ' ') | upper }}{% endif %}
+            </span>
           </div>
 
-          <div class="project-body">
-            <h3 class="project-name">{{ p.name }}</h3>
-            <p class="project-desc">{{ p.short_desc }}</p>
+          <div class="nh-listing-body">
+            <h3 class="nh-listing-name">{{ p.name }}</h3>
 
-            <div class="project-meta">
+            {% if p.location %}
+            <p class="nh-listing-loc">
               <i class="fa-solid fa-location-dot"></i>
-              <span>{{ p.location }}{% if p.units %} • {{ p.units }}{% endif %}</span>
+              {{ p.location }}
+            </p>
+            {% endif %}
+
+            <div class="nh-listing-amen">
+              {% if p.short_desc %}
+              <span><i class="fa-solid fa-house"></i> {{ p.short_desc }}</span>
+              {% endif %}
+
+              <span>
+                <i class="fa-solid fa-tag"></i>
+                {% if p.category == 'other' and p.custom_type %}
+                  {{ p.custom_type | capitalize }}
+                {% else %}
+                  {{ p.category | capitalize }}
+                {% endif %}
+              </span>
             </div>
 
-            <div class="project-footer">
-              <div class="project-price">
-                <span class="label">From</span>
-                <span class="value">${{ "{:,}".format(p.price_from) }}</span>
-              </div>
-              <a href="{{ url_for('project_detail', slug=p.slug) }}" class="project-learn">
-                Learn More <i class="fa-solid fa-arrow-right"></i>
+            <div class="nh-listing-bottom">
+              <span class="nh-listing-price">
+                {% if p.currency == 'USD' %}
+                  ${{ "{:,}".format(p.price_from|int) }}
+                {% else %}
+                  GHS {{ "{:,}".format(p.price_from|int) }}
+                {% endif %}
+              </span>
+              <a href="{{ url_for('project_detail', slug=p.slug) }}" class="nh-listing-cta">
+                View Details
               </a>
             </div>
           </div>

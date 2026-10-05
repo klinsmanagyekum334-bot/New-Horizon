@@ -1,13 +1,13 @@
 {% extends "update/base_update.html" %}
-{% block title %}{{ 'Edit' if project else 'Add' }} Project — Control Panel{% endblock %}
+{% block title %}{{ 'Edit' if project else 'Add' }} Property — Control Panel{% endblock %}
 
 {% block content %}
 
 <div class="update-page-head">
   <div>
-    <h1 class="update-page-title">{{ 'Edit' if project else 'Add' }} Project</h1>
+    <h1 class="update-page-title">{{ 'Edit' if project else 'Add' }} Property</h1>
     <p class="update-page-sub">
-      {{ 'Update the details below.' if project else 'Fill in the details to add a new project.' }}
+      {{ 'Update the listing below.' if project else 'Fill in the details to add a new listing.' }}
     </p>
   </div>
   <a href="{{ url_for('update_projects') }}" class="update-btn update-btn-secondary">
@@ -20,15 +20,16 @@
       enctype="multipart/form-data"
       class="update-form">
 
-  <!-- Basic Info -->
+  <!-- ── Basic info ── -->
   <div class="update-panel">
-    <h2 class="update-panel-title"><i class="fa-solid fa-circle-info"></i> Basic Information</h2>
+    <h2 class="update-panel-title"><i class="fa-solid fa-circle-info"></i> Basic Info</h2>
 
     <div class="update-form-grid">
       <div class="update-field full">
-        <label for="name">Project Name *</label>
+        <label for="name">Property Name *</label>
         <input type="text" id="name" name="name"
-               value="{{ project.name if project else '' }}" required>
+               value="{{ project.name if project else '' }}"
+               placeholder="e.g. East Legon Villas" required>
       </div>
 
       <div class="update-field full">
@@ -36,91 +37,111 @@
         <input type="text" id="slug" name="slug"
                value="{{ project.slug if project else '' }}"
                placeholder="e.g. east-legon-villas" required>
-        <p class="update-hint">Lowercase, use hyphens instead of spaces.</p>
+        <p class="update-hint">Lowercase, hyphens instead of spaces. Fills automatically from the name.</p>
       </div>
+    </div>
+  </div>
 
+  <!-- ── Type ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-tag"></i> Type</h2>
+
+    <div class="update-form-grid">
       <div class="update-field">
         <label for="category">Category *</label>
-        <select id="category" name="category" required>
+        <select id="category" name="category" onchange="toggleCustomType()" required>
           <option value="residential" {% if project and project.category == 'residential' %}selected{% endif %}>Residential</option>
           <option value="commercial"  {% if project and project.category == 'commercial'  %}selected{% endif %}>Commercial</option>
+          <option value="other"       {% if project and project.category == 'other'       %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <div class="update-field" id="customTypeWrap" style="display:none">
+        <label for="custom_type">Custom Type</label>
+        <input type="text" id="custom_type" name="custom_type"
+               value="{{ project.custom_type if project and project.custom_type else '' }}"
+               placeholder="e.g. Villa, Warehouse, Hotel">
+        <p class="update-hint">Appears as a filter chip on the homepage.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Status ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-signal"></i> Status</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field">
+        <label for="status">Current Status</label>
+        <select id="status" name="status">
+          <option value="" {% if not project or not project.status %}selected{% endif %}>— None —</option>
+          <option value="fully-complete"     {% if project and project.status == 'fully-complete' %}selected{% endif %}>Fully Complete</option>
+          <option value="partially-complete" {% if project and project.status == 'partially-complete' %}selected{% endif %}>Partially Complete</option>
+          <option value="ongoing"            {% if project and project.status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+          <option value="about-to-start"     {% if project and project.status == 'about-to-start' %}selected{% endif %}>About to Start</option>
+        </select>
+        <p class="update-hint">Leave blank if not applicable.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Amount ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-coins"></i> Amount</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field update-field-sm">
+        <label for="currency">Currency</label>
+        <select id="currency" name="currency" required>
+          <option value="GHS" {% if not project or project.currency == 'GHS' %}selected{% endif %}>GHC — Ghana Cedi</option>
+          <option value="USD" {% if project and project.currency == 'USD' %}selected{% endif %}>$ — US Dollar</option>
         </select>
       </div>
 
       <div class="update-field">
-        <label for="status">Status *</label>
-        <select id="status" name="status" required>
-          {% for s in ['ongoing', 'available', 'pre-launch', 'sold-out'] %}
-          <option value="{{ s }}" {% if project and project.status == s %}selected{% endif %}>
-            {{ s | replace('-', ' ') | title }}
-          </option>
-          {% endfor %}
-        </select>
+        <label for="price_from">Amount</label>
+        <input type="number" id="price_from" name="price_from"
+               value="{{ project.price_from if project else '' }}"
+               placeholder="e.g. 480000" min="0" step="1">
       </div>
+    </div>
+  </div>
 
-      <div class="update-field">
+  <!-- ── Location & Description ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title"><i class="fa-solid fa-location-dot"></i> Location &amp; Description</h2>
+
+    <div class="update-form-grid">
+      <div class="update-field full">
         <label for="location">Location</label>
         <input type="text" id="location" name="location"
                value="{{ project.location if project else '' }}"
                placeholder="e.g. East Legon, Accra">
       </div>
 
-      <div class="update-field">
-        <label for="units">Units</label>
-        <input type="text" id="units" name="units"
-               value="{{ project.units if project else '' }}"
-               placeholder="e.g. 48 Villas">
+      <div class="update-field full">
+        <label for="short_desc">Description</label>
+        <input type="text" id="short_desc" name="short_desc"
+               value="{{ project.short_desc if project else '' }}"
+               placeholder="e.g. 2 Bedrooms · 2 Baths · 180 sqm">
+        <p class="update-hint">Shown as an amenity pill on the card.</p>
       </div>
 
-      <div class="update-field">
-        <label for="price_from">Price From ($)</label>
-        <input type="number" id="price_from" name="price_from"
-               value="{{ project.price_from if project else '' }}"
-               placeholder="e.g. 420000" min="0" step="1">
-      </div>
-
-      <div class="update-field">
-        <label for="sort_order">Sort Order</label>
-        <input type="number" id="sort_order" name="sort_order"
-               value="{{ project.sort_order if project else 99 }}" min="0">
-      </div>
-
-      <div class="update-field full update-checkbox-field">
-        <label class="update-checkbox">
-          <input type="checkbox" name="featured"
-                 {% if project and project.featured %}checked{% endif %}>
-          <span>Feature this project (shows in the homepage carousel)</span>
-        </label>
+      <div class="update-field full">
+        <label for="long_desc">Full Details (optional)</label>
+        <textarea id="long_desc" name="long_desc" rows="5"
+                  placeholder="Full property description shown on the detail page.">{{ project.long_desc if project else '' }}</textarea>
       </div>
     </div>
   </div>
 
-  <!-- Descriptions -->
+  <!-- ── Media ── -->
   <div class="update-panel">
-    <h2 class="update-panel-title"><i class="fa-solid fa-align-left"></i> Descriptions</h2>
+    <h2 class="update-panel-title"><i class="fa-solid fa-image"></i> Images &amp; Video</h2>
 
-    <div class="update-form-grid">
-      <div class="update-field full">
-        <label for="short_desc">Short Description</label>
-        <textarea id="short_desc" name="short_desc" rows="3"
-                  placeholder="One-line summary shown on the card.">{{ project.short_desc if project else '' }}</textarea>
-      </div>
-
-      <div class="update-field full">
-        <label for="long_desc">Long Description</label>
-        <textarea id="long_desc" name="long_desc" rows="6"
-                  placeholder="Full project description shown on the detail page.">{{ project.long_desc if project else '' }}</textarea>
-      </div>
-    </div>
-  </div>
-
-  <!-- Images -->
-  <div class="update-panel">
-    <h2 class="update-panel-title"><i class="fa-solid fa-image"></i> Images</h2>
-
-    <!-- Card Image -->
+    <!-- Card image -->
     <div class="update-field full update-image-field">
-      <label>Card Image (thumbnail on the site)</label>
+      <label>Card Image</label>
       <div class="update-image-row">
         <div class="update-image-preview">
           <img id="preview_image"
@@ -130,17 +151,10 @@
         <div class="update-image-controls">
           <div class="update-image-actions">
             <label for="image_file" class="update-btn update-btn-secondary update-upload-btn">
-              <i class="fa-solid fa-folder-open"></i> From Gallery
+              <i class="fa-solid fa-folder-open"></i> Upload
             </label>
             <input type="file" id="image_file" name="image_file"
                    accept="image/*" hidden
-                   onchange="previewFile(this, 'preview_image')">
-
-            <label for="image_camera" class="update-btn update-btn-secondary update-upload-btn">
-              <i class="fa-solid fa-camera"></i> Take Photo
-            </label>
-            <input type="file" id="image_camera" name="image_file"
-                   accept="image/*" capture="environment" hidden
                    onchange="previewFile(this, 'preview_image')">
           </div>
           <div class="update-field">
@@ -154,7 +168,7 @@
       </div>
     </div>
 
-    <!-- Hero Image -->
+    <!-- Hero image -->
     <div class="update-field full update-image-field">
       <label>Hero Image (large banner on detail page)</label>
       <div class="update-image-row">
@@ -166,17 +180,10 @@
         <div class="update-image-controls">
           <div class="update-image-actions">
             <label for="hero_file" class="update-btn update-btn-secondary update-upload-btn">
-              <i class="fa-solid fa-folder-open"></i> From Gallery
+              <i class="fa-solid fa-folder-open"></i> Upload
             </label>
             <input type="file" id="hero_file" name="hero_file"
                    accept="image/*" hidden
-                   onchange="previewFile(this, 'preview_hero')">
-
-            <label for="hero_camera" class="update-btn update-btn-secondary update-upload-btn">
-              <i class="fa-solid fa-camera"></i> Take Photo
-            </label>
-            <input type="file" id="hero_camera" name="hero_file"
-                   accept="image/*" capture="environment" hidden
                    onchange="previewFile(this, 'preview_hero')">
           </div>
           <div class="update-field">
@@ -189,20 +196,93 @@
         </div>
       </div>
     </div>
+
+    <!-- Video -->
+    <div class="update-field full update-image-field">
+      <label>Property Video (optional)</label>
+      <div class="update-image-row">
+        <div class="update-image-preview">
+          {% if project and project.video %}
+            <video preload="metadata" muted style="width:100%;height:100%;object-fit:cover;background:#000;border-radius:8px;">
+              <source src="{{ project.video }}" type="video/mp4">
+            </video>
+          {% else %}
+            <div style="display:grid;place-items:center;height:100%;color:#8a8272;font-size:12px;text-align:center;padding:12px;">
+              No video uploaded
+            </div>
+          {% endif %}
+        </div>
+        <div class="update-image-controls">
+          <div class="update-image-actions">
+            <label for="video_file" class="update-btn update-btn-secondary update-upload-btn">
+              <i class="fa-solid fa-video"></i> Upload Video
+            </label>
+            <input type="file" id="video_file" name="video_file"
+                   accept="video/mp4,video/webm,video/quicktime" hidden>
+          </div>
+          <div class="update-field">
+            <label for="video_url">…or paste video URL</label>
+            <input type="text" id="video_url" name="video_url"
+                   value="{% if project and project.video and not project.video.startswith('/static/') %}{{ project.video }}{% endif %}"
+                   placeholder="https://... or /static/uploads/nh-videos/xyz.mp4">
+          </div>
+          <p class="update-hint">Max 20MB · MP4, WebM, or MOV</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Submit -->
+  <!-- ── Feature checkbox ── -->
+  <div class="update-panel">
+    <div class="update-field full update-checkbox-field">
+      <label class="update-checkbox">
+        <input type="checkbox" name="featured"
+               {% if project and project.featured %}checked{% endif %}>
+        <span><strong>Feature on main page</strong> — highlighted in the Estates section on the homepage</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── Actions ── -->
   <div class="update-form-actions">
-    <a href="{{ url_for('update_projects') }}" class="update-btn update-btn-secondary">Cancel</a>
+    <a href="{{ url_for('update_projects') }}" class="update-btn update-btn-secondary">
+      Cancel
+    </a>
     <button type="submit" class="update-btn update-btn-primary">
       <i class="fa-solid fa-check"></i>
-      {{ 'Save Changes' if project else 'Create Project' }}
+      {{ 'Save Changes' if project else 'Save' }}
     </button>
   </div>
-
 </form>
 
+{% if project %}
+<div class="update-panel update-panel-danger">
+  <h2 class="update-panel-title"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h2>
+  <p class="update-hint" style="margin-bottom: 14px;">
+    Deleting a property is permanent. The images, video and listing data will be removed from the database.
+  </p>
+  <form method="POST"
+        action="{{ url_for('update_project_delete', pid=project.id) }}"
+        onsubmit="return confirm('Delete this property permanently?');"
+        style="margin:0;">
+    <button type="submit" class="update-btn update-btn-danger">
+      <i class="fa-solid fa-trash"></i> Delete Property
+    </button>
+  </form>
+</div>
+{% endif %}
+
 <script>
+  // Show/hide custom type based on category
+  function toggleCustomType() {
+    const sel  = document.getElementById('category');
+    const wrap = document.getElementById('customTypeWrap');
+    if (!sel || !wrap) return;
+    wrap.style.display = (sel.value === 'other') ? 'flex' : 'none';
+  }
+  document.addEventListener('DOMContentLoaded', toggleCustomType);
+
+  // Image previews
   function previewFile(input, targetId) {
     if (!input.files || !input.files[0]) return;
     const reader = new FileReader();
@@ -213,6 +293,29 @@
     const v = input.value.trim();
     if (v) document.getElementById(targetId).src = v;
   }
+
+  // Auto-fill slug from name (only when creating new)
+  {% if not project %}
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    if (nameInput && slugInput) {
+      nameInput.addEventListener('input', () => {
+        if (!slugInput.dataset.touched) {
+          slugInput.value = nameInput.value
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+        }
+      });
+      slugInput.addEventListener('input', () => {
+        slugInput.dataset.touched = '1';
+      });
+    }
+  });
+  {% endif %}
 </script>
 
 {% endblock %}
