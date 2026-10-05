@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Our Videos — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <div class="container">
+    <h1 class="page-header-title">Our Videos</h1>
+    <p class="page-header-sub">
+      Watch our latest developments, site tours and showreels.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    {% if videos %}
+    <div style="display:grid; gap:32px; max-width:900px; margin:0 auto;">
+
+      {% for v in videos %}
+      <div style="background:#fff; border:1px solid #ece0c4; border-radius:16px; overflow:hidden;">
+
+        {% if v.filename %}
+        <video controls preload="metadata" style="width:100%; display:block; aspect-ratio:16/9; background:#000;">
+          <source src="{{ v.filename }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        {% else %}
+        <div style="padding:60px 20px; text-align:center; background:#f8f9fa;">
+          <i class="fa-solid fa-video-slash" style="font-size:2rem; color:#adb5bd;"></i>
+          <p style="color:#6c757d; margin-top:12px;">No video file uploaded yet.</p>
+        </div>
+        {% endif %}
+
+        <div style="padding:20px 24px;">
+          <h3 style="font-family:'Poppins',sans-serif; font-size:18px; font-weight:700; color:#0a1f33; margin-bottom:6px;">
+            {{ v.title }}
+          </h3>
+          {% if v.description %}
+          <p style="font-size:14px; color:#7a8a7e; line-height:1.5;">{{ v.description }}</p>
+          {% endif %}
+        </div>
+
+      </div>
+      {% endfor %}
+
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fa-regular fa-circle-play"></i>
+      <h3>No videos yet</h3>
+      <p>Videos will appear here once they are uploaded.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<section class="section section-soft">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-text">
+        <h3>Want to see a project in person?</h3>
+        <p>Book a free consultation and we'll arrange a site visit.</p>
+      </div>
+      <a href="{{ url_for('book') }}" class="btn-primary">
+        <i class="fa-solid fa-phone"></i> Book Consultation
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
