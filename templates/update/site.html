@@ -6,7 +6,9 @@
 <div class="update-page-head">
   <div>
     <h1 class="update-page-title">Site Content</h1>
-    <p class="update-page-sub">Edit every text and image shown on the site.</p>
+    <p class="update-page-sub">
+      Edit every text and image shown on the public site.
+    </p>
   </div>
 </div>
 
@@ -23,61 +25,86 @@
 
       {% for field in sec.fields %}
 
+        {# ─────────── TEXT ─────────── #}
         {% if field.type == "text" %}
-        <div class="update-field {% if field.key == 'services_items' %}full{% endif %}">
+        <div class="update-field full">
           <label for="{{ field.key }}">{{ field.label }}</label>
-          <input type="text" id="{{ field.key }}" name="{{ field.key }}"
+          <input type="text"
+                 id="{{ field.key }}"
+                 name="{{ field.key }}"
                  value="{{ site.get(field.key, field.default) }}">
         </div>
 
+        {# ─────────── TEXTAREA ─────────── #}
         {% elif field.type == "textarea" %}
         <div class="update-field full">
           <label for="{{ field.key }}">{{ field.label }}</label>
-          <textarea id="{{ field.key }}" name="{{ field.key }}" rows="5">{{ site.get(field.key, field.default) }}</textarea>
+          <textarea id="{{ field.key }}"
+                    name="{{ field.key }}"
+                    rows="4">{{ site.get(field.key, field.default) }}</textarea>
         </div>
 
+        {# ─────────── IMAGE ─────────── #}
         {% elif field.type == "image" %}
         <div class="update-field full update-image-field">
           <label>{{ field.label }}</label>
 
           <div class="update-image-row">
             <div class="update-image-preview">
-              <img src="{{ site.get(field.key, field.default) }}" alt="Preview" id="preview_{{ field.key }}">
+              {% set current = site.get(field.key, field.default) %}
+              {% if current %}
+              <img id="preview_{{ field.key }}" src="{{ current }}" alt="Preview">
+              {% else %}
+              <img id="preview_{{ field.key }}" src="" alt="No image yet"
+                   style="display:none;">
+              <div class="update-image-empty" id="empty_{{ field.key }}">No image yet</div>
+              {% endif %}
             </div>
 
             <div class="update-image-controls">
               <div class="update-image-actions">
-                <label for="file_{{ field.key }}" class="update-btn update-btn-secondary update-upload-btn">
+                <label for="file_{{ field.key }}"
+                       class="update-btn update-btn-secondary update-upload-btn">
                   <i class="fa-solid fa-folder-open"></i> Choose from Gallery
                 </label>
-                <input type="file" id="file_{{ field.key }}" name="file_{{ field.key }}"
-                       accept="image/*" hidden
-                       onchange="previewFile(this, 'preview_{{ field.key }}')">
+                <input type="file"
+                       id="file_{{ field.key }}"
+                       name="file_{{ field.key }}"
+                       accept="image/*"
+                       hidden
+                       onchange="previewFile(this, 'preview_{{ field.key }}', 'empty_{{ field.key }}')">
 
-                <label for="camera_{{ field.key }}" class="update-btn update-btn-secondary update-upload-btn">
+                <label for="camera_{{ field.key }}"
+                       class="update-btn update-btn-secondary update-upload-btn">
                   <i class="fa-solid fa-camera"></i> Take Photo
                 </label>
-                <input type="file" id="camera_{{ field.key }}" name="file_{{ field.key }}"
-                       accept="image/*" capture="environment" hidden
-                       onchange="previewFile(this, 'preview_{{ field.key }}')">
+                <input type="file"
+                       id="camera_{{ field.key }}"
+                       name="file_{{ field.key }}"
+                       accept="image/*"
+                       capture="environment"
+                       hidden
+                       onchange="previewFile(this, 'preview_{{ field.key }}', 'empty_{{ field.key }}')">
               </div>
 
               <div class="update-field">
                 <label for="url_{{ field.key }}">…or paste image URL</label>
-                <input type="text" id="url_{{ field.key }}" name="url_{{ field.key }}"
+                <input type="text"
+                       id="url_{{ field.key }}"
+                       name="url_{{ field.key }}"
                        placeholder="https://..."
-                       value="{% if not site.get(field.key, field.default).startswith('/static/') %}{{ site.get(field.key, field.default) }}{% endif %}"
-                       oninput="previewUrl(this, 'preview_{{ field.key }}')">
+                       value="{% if current and not current.startswith('/static/') %}{{ current }}{% endif %}"
+                       oninput="previewUrl(this, 'preview_{{ field.key }}', 'empty_{{ field.key }}')">
               </div>
             </div>
           </div>
         </div>
+
         {% endif %}
 
       {% endfor %}
 
     </div>
-
   </div>
   {% endfor %}
 
@@ -90,17 +117,30 @@
 </form>
 
 <script>
-  function previewFile(input, targetId) {
+  function previewFile(input, targetId, emptyId) {
     if (!input.files || !input.files[0]) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      document.getElementById(targetId).src = e.target.result;
+      const img = document.getElementById(targetId);
+      if (img) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+      }
+      const empty = document.getElementById(emptyId);
+      if (empty) empty.style.display = 'none';
     };
     reader.readAsDataURL(input.files[0]);
   }
-  function previewUrl(input, targetId) {
+
+  function previewUrl(input, targetId, emptyId) {
     const v = input.value.trim();
-    if (v) document.getElementById(targetId).src = v;
+    const img = document.getElementById(targetId);
+    const empty = document.getElementById(emptyId);
+    if (v && img) {
+      img.src = v;
+      img.style.display = 'block';
+      if (empty) empty.style.display = 'none';
+    }
   }
 </script>
 
