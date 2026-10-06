@@ -26,11 +26,9 @@ PHONE_DISPLAY   = "+233 24 344 4343"
 EMAIL_ADDRESS   = "info@newhorizongh.com"
 ADDRESS         = "Tema Community 25, Ghana"
 
-MAX_VIDEOS              = 10
-MAX_VIDEO_BYTES         = 20 * 1024 * 1024      # global video band
-MAX_IMAGE_BYTES         = 5  * 1024 * 1024
-MAX_PROJECT_IMAGES      = 7
-MAX_PROJECT_VIDEO_BYTES = 10 * 1024 * 1024      # per-project video
+MAX_VIDEOS      = 10
+MAX_VIDEO_BYTES = 20 * 1024 * 1024
+MAX_IMAGE_BYTES = 5  * 1024 * 1024
 
 BUCKET_IMAGES  = "nh-images"
 BUCKET_GALLERY = "nh-gallery"
@@ -53,112 +51,109 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # ============================================================
-# SITE SCHEMA — editable content
+# SITE SCHEMA — only fields that actually render on the site
 # ============================================================
 SITE_SCHEMA = [
     {
         "section": "Branding",
         "icon": "fa-solid fa-tag",
         "fields": [
-            {"key": "brand_name",    "label": "Brand Name (full)",           "type": "text",  "default": "New Horizon Coopers Limited"},
-            {"key": "brand_new",     "label": "Logo Word 1 (NEW)",           "type": "text",  "default": "NEW"},
-            {"key": "brand_horizon", "label": "Logo Word 2 (HORIZON)",       "type": "text",  "default": "HORIZON"},
-            {"key": "brand_coopers", "label": "Coopers Limited line",        "type": "text",  "default": "Coopers Limited"},
-            {"key": "brand_tagline", "label": "Tagline (below logo)",        "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
-            {"key": "logo_path",     "label": "Site Logo",                   "type": "image", "default": ""},
+            {"key": "brand_name",    "label": "Brand Name (browser tab)", "type": "text",  "default": "New Horizon Coopers Limited"},
+            {"key": "brand_new",     "label": "Logo Word 1 (dark)",       "type": "text",  "default": "NEW"},
+            {"key": "brand_horizon", "label": "Logo Word 2 (orange)",     "type": "text",  "default": "HORIZON"},
+            {"key": "brand_coopers", "label": "Coopers Limited line",     "type": "text",  "default": "Coopers Limited"},
+            {"key": "brand_tagline", "label": "Tagline (below logo)",     "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
+            {"key": "logo_path",     "label": "Admin Sidebar Logo",       "type": "image", "default": ""},
+        ],
+    },
+    {
+        "section": "Homepage — Hero Images",
+        "icon": "fa-solid fa-image",
+        "fields": [
+            {"key": "hero_image1", "label": "Hero 1 — Top Image",   "type": "image", "default": ""},
+            {"key": "hero_image2", "label": "Hero 2 — Below Image", "type": "image", "default": ""},
         ],
     },
     {
         "section": "Header",
         "icon": "fa-solid fa-bars",
         "fields": [
-            {"key": "header_cta_text",  "label": "Header Button Text",      "type": "text", "default": "Book Consultation"},
-            {"key": "header_search_ph", "label": "Search box placeholder",  "type": "text", "default": "Search properties, products, pages…"},
+            {"key": "header_cta_text",  "label": "Header Button Text",     "type": "text", "default": "Book Consultation"},
+            {"key": "header_search_ph", "label": "Search box placeholder", "type": "text", "default": "Search properties, products, pages…"},
         ],
     },
     {
-        "section": "Search Drawer",
+        "section": "Search Bar Messages",
         "icon": "fa-solid fa-magnifying-glass",
         "fields": [
-            {"key": "search_hint",       "label": "Hint text (empty state)", "type": "text", "default": "Start typing to search pages, projects, and products."},
-            {"key": "search_loading",    "label": "Loading message",         "type": "text", "default": "Searching…"},
-            {"key": "search_no_results", "label": "No results message",      "type": "text", "default": "No results found."},
-            {"key": "search_unavailable","label": "Unavailable message",     "type": "text", "default": "Search unavailable."},
+            {"key": "search_hint",        "label": "Hint (empty state)",  "type": "text", "default": "Start typing to search pages, projects, and products."},
+            {"key": "search_loading",     "label": "Loading message",     "type": "text", "default": "Searching…"},
+            {"key": "search_no_results",  "label": "No results message",  "type": "text", "default": "No results found."},
+            {"key": "search_unavailable", "label": "Unavailable message", "type": "text", "default": "Search unavailable."},
         ],
     },
     {
-        "section": "Hero Section",
-        "icon": "fa-solid fa-house-chimney",
-        "fields": [
-            {"key": "hero_eyebrow",  "label": "Hero Eyebrow",               "type": "text",  "default": "About New Horizon"},
-            {"key": "hero_title",    "label": "Hero Title",                 "type": "text",  "default": "New Horizon is a company which deals with"},
-            {"key": "hero_title_em", "label": "Hero Title (italic accent)", "type": "text",  "default": "Real Estate & Pharmaceutical products."},
-            {"key": "hero_subtitle", "label": "Hero Subtitle",              "type": "text",  "default": "Most trusted Agency in Ghana"},
-            {"key": "hero_image",    "label": "Hero Background Image",      "type": "image", "default": ""},
-        ],
-    },
-    {
-        "section": "Estates Section",
+        "section": "Real Estates Section (homepage)",
         "icon": "fa-solid fa-house-chimney-window",
         "fields": [
-            {"key": "estates_title",    "label": "Estates Title (dark part)",   "type": "text", "default": "NEW HORIZON"},
-            {"key": "estates_title_em", "label": "Estates Title (italic part)", "type": "text", "default": "REAL ESTATES"},
-            {"key": "estates_sub",      "label": "Estates Subtext",             "type": "text", "default": "We have the following"},
-            {"key": "estates_cta",      "label": "See-all button text",         "type": "text", "default": "See all properties"},
+            {"key": "estates_title",    "label": "Title — dark part",   "type": "text", "default": "NEW HORIZON"},
+            {"key": "estates_title_em", "label": "Title — italic part", "type": "text", "default": "REAL ESTATES"},
+            {"key": "estates_sub",      "label": "Subtext",             "type": "text", "default": "We have the following"},
+            {"key": "estates_cta",      "label": "See-all button text", "type": "text", "default": "See all properties"},
         ],
     },
     {
-        "section": "Pharma Section",
+        "section": "Pharmaceuticals Section (homepage)",
         "icon": "fa-solid fa-prescription-bottle-medical",
         "fields": [
-            {"key": "pharma_title",    "label": "Pharma Title (dark part)",   "type": "text", "default": "NEW HORIZON"},
-            {"key": "pharma_title_em", "label": "Pharma Title (italic part)", "type": "text", "default": "PHARMACEUTICALS"},
-            {"key": "pharma_sub",      "label": "Pharma Subtext",             "type": "text", "default": "We stock the following"},
-            {"key": "pharma_cta",      "label": "Pharma button text",         "type": "text", "default": "Request full catalogue"},
+            {"key": "pharma_title",    "label": "Title — dark part",   "type": "text", "default": "NEW HORIZON"},
+            {"key": "pharma_title_em", "label": "Title — italic part", "type": "text", "default": "PHARMACEUTICALS"},
+            {"key": "pharma_sub",      "label": "Subtext",             "type": "text", "default": "We stock the following"},
+            {"key": "pharma_cta",      "label": "See-all button text", "type": "text", "default": "Request full catalogue"},
         ],
     },
     {
-        "section": "CTA Band",
+        "section": "CTA Band (bottom of homepage)",
         "icon": "fa-solid fa-bullhorn",
         "fields": [
-            {"key": "cta_eyebrow",       "label": "CTA Eyebrow",             "type": "text", "default": "Let's talk"},
-            {"key": "cta_title",         "label": "CTA Title (line 1)",      "type": "text", "default": "Ready to find your"},
-            {"key": "cta_title_em",      "label": "CTA Title (italic line)", "type": "text", "default": "next address?"},
-            {"key": "cta_sub",           "label": "CTA Subtext",             "type": "text", "default": "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away."},
-            {"key": "cta_btn_primary",   "label": "Primary button text",     "type": "text", "default": "Book a consultation"},
-            {"key": "cta_btn_secondary", "label": "Secondary button text",   "type": "text", "default": "Contact us"},
+            {"key": "cta_eyebrow",       "label": "Eyebrow",               "type": "text", "default": "Let's talk"},
+            {"key": "cta_title",         "label": "Title — line 1",        "type": "text", "default": "Ready to find your"},
+            {"key": "cta_title_em",      "label": "Title — italic line",   "type": "text", "default": "next address?"},
+            {"key": "cta_sub",           "label": "Subtext",               "type": "text", "default": "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away."},
+            {"key": "cta_btn_primary",   "label": "Primary button text",   "type": "text", "default": "Book a consultation"},
+            {"key": "cta_btn_secondary", "label": "Secondary button text", "type": "text", "default": "Contact us"},
         ],
     },
     {
-        "section": "Contact & Location",
+        "section": "Contact Info (footer + contact page)",
         "icon": "fa-solid fa-address-book",
         "fields": [
-            {"key": "contact_email",         "label": "Email Address",              "type": "text", "default": EMAIL_ADDRESS},
-            {"key": "contact_phone_display", "label": "Phone (displayed)",          "type": "text", "default": PHONE_DISPLAY},
-            {"key": "contact_whatsapp_num",  "label": "WhatsApp (no +, no spaces)", "type": "text", "default": WHATSAPP_NUMBER},
-            {"key": "contact_heading",       "label": "Contact Section Heading",    "type": "text", "default": "Contact Us"},
-            {"key": "contact_subheading",    "label": "Contact Section Subheading", "type": "text", "default": "We're here to help — reach out anytime."},
-            {"key": "location_heading",      "label": "Location Heading",           "type": "text", "default": "Our Location"},
-            {"key": "location_address",      "label": "Location Address",           "type": "text", "default": ADDRESS},
-            {"key": "location_maps_url",     "label": "Google Maps Link",           "type": "text", "default": "https://www.google.com/maps/search/?api=1&query=Tema+Community+25+Ghana"},
+            {"key": "contact_email",         "label": "Email Address",              "type": "text", "default": "info@newhorizongh.com"},
+            {"key": "contact_phone_display", "label": "Phone (displayed)",          "type": "text", "default": "+233 24 344 4343"},
+            {"key": "contact_whatsapp_num",  "label": "WhatsApp (no +, no spaces)", "type": "text", "default": "233243444343"},
+            {"key": "location_address",      "label": "Office Address",             "type": "text", "default": "Tema Community 25, Ghana"},
         ],
     },
     {
         "section": "Footer",
         "icon": "fa-solid fa-shoe-prints",
         "fields": [
-            {"key": "footer_blurb",          "label": "Footer Blurb",                   "type": "textarea",
+            {"key": "footer_blurb", "label": "Blurb (under logo)", "type": "textarea",
              "default": "New Horizon Coopers Limited — building sustainable, modern communities across Ghana since 2017."},
-            {"key": "footer_col_company",    "label": "Column 1 heading",               "type": "text", "default": "Company"},
-            {"key": "footer_link_about",     "label": "Column 1 · Link 1",              "type": "text", "default": "About"},
-            {"key": "footer_link_projects",  "label": "Column 1 · Link 2",              "type": "text", "default": "Projects"},
-            {"key": "footer_link_gallery",   "label": "Column 1 · Link 3",              "type": "text", "default": "Gallery"},
-            {"key": "footer_link_contact",   "label": "Column 1 · Link 4",              "type": "text", "default": "Contact"},
-            {"key": "footer_col_divisions",  "label": "Column 2 heading",               "type": "text", "default": "Divisions"},
-            {"key": "footer_link_realestate","label": "Column 2 · Link 1",              "type": "text", "default": "Real Estate"},
-            {"key": "footer_link_pharma",    "label": "Column 2 · Link 2",              "type": "text", "default": "Pharmaceuticals"},
-            {"key": "footer_col_contact",    "label": "Column 3 heading",               "type": "text", "default": "Contact"},
-            {"key": "footer_copyright",      "label": "Bottom bar — copyright",         "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
+
+            {"key": "footer_col_company",   "label": "Col 1 — heading", "type": "text", "default": "Company"},
+            {"key": "footer_link_about",    "label": "Col 1 — Link 1",  "type": "text", "default": "About"},
+            {"key": "footer_link_projects", "label": "Col 1 — Link 2",  "type": "text", "default": "Projects"},
+            {"key": "footer_link_gallery",  "label": "Col 1 — Link 3",  "type": "text", "default": "Gallery"},
+            {"key": "footer_link_contact",  "label": "Col 1 — Link 4",  "type": "text", "default": "Contact"},
+
+            {"key": "footer_col_divisions",   "label": "Col 2 — heading", "type": "text", "default": "Divisions"},
+            {"key": "footer_link_realestate", "label": "Col 2 — Link 1",  "type": "text", "default": "Real Estate"},
+            {"key": "footer_link_pharma",     "label": "Col 2 — Link 2",  "type": "text", "default": "Pharmaceuticals"},
+
+            {"key": "footer_col_contact", "label": "Col 3 — heading", "type": "text", "default": "Contact"},
+
+            {"key": "footer_copyright", "label": "Bottom bar — copyright", "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
         ],
     },
 ]
@@ -173,7 +168,7 @@ def get_schema_defaults():
 
 
 # ============================================================
-# INIT — seed Supabase tables
+# INIT — seed tables
 # ============================================================
 def seed_if_empty(table, rows):
     try:
@@ -199,7 +194,7 @@ def init_db():
     except Exception as e:
         print("seed site_content error:", e)
 
-    # nav links
+    # nav
     seed_if_empty("nh_nav_links", [
         {"label": "Home",            "url": "/",         "sort_order": 1, "is_locked": True,  "visible": True},
         {"label": "About Us",        "url": "/about",    "sort_order": 2, "is_locked": False, "visible": True},
@@ -229,7 +224,7 @@ def init_db():
         {"label": "Veterinary Products",            "sort_order": 8, "is_active": True},
     ])
 
-    # demo projects
+    # demo projects (only if empty)
     seed_if_empty("nh_projects", [
         {"slug":"east-legon-villas","name":"East Legon Villas","category":"residential","custom_type":"",
          "status":"ongoing","currency":"USD","short_desc":"2 Bedrooms · 2 Baths · 180 sqm",
@@ -272,7 +267,7 @@ def init_db():
          "video":"","video_description":"","featured":False,"sort_order":5},
     ])
 
-    # demo drugs
+    # demo drugs (only if empty)
     seed_if_empty("nh_drugs", [
         {"slug":"paracetamol-500mg","name":"Paracetamol 500mg",
          "drug_type":"Over-the-Counter Products",
@@ -350,22 +345,19 @@ def fetch_site():
 
 def fetch_nav():
     try:
-        res = (supabase.table("nh_nav_links")
-               .select("*").eq("visible", True)
-               .order("sort_order").order("id").execute())
+        res = supabase.table("nh_nav_links").select("*").eq("visible", True) \
+            .order("sort_order").order("id").execute()
         return res.data or []
     except Exception as e:
         print("fetch_nav error:", e)
         return []
 
 
-def fetch_projects(category=None, featured_only=False, custom_type=None):
+def fetch_projects(category=None, featured_only=False):
     try:
         q = supabase.table("nh_projects").select("*")
         if category:
             q = q.eq("category", category)
-        if custom_type:
-            q = q.eq("custom_type", custom_type)
         if featured_only:
             q = q.eq("featured", True)
         q = q.order("sort_order").order("id")
@@ -386,9 +378,8 @@ def fetch_project(slug):
 
 def fetch_project_images(project_id):
     try:
-        res = (supabase.table("nh_project_images")
-               .select("*").eq("project_id", project_id)
-               .order("sort_order").order("id").execute())
+        res = supabase.table("nh_project_images").select("*") \
+            .eq("project_id", project_id).order("sort_order").order("id").execute()
         return res.data or []
     except Exception as e:
         print("fetch_project_images error:", e)
@@ -405,64 +396,6 @@ def fetch_property_types(only_active=False):
     except Exception as e:
         print("fetch_property_types error:", e)
         return []
-
-
-def fetch_custom_types():
-    return [t["label"] for t in fetch_property_types(only_active=True)]
-
-
-def ensure_property_type(label):
-    label = (label or "").strip()
-    if not label:
-        return
-    try:
-        res = (supabase.table("nh_property_types")
-               .select("id").ilike("label", label).limit(1).execute())
-        if res.data:
-            return
-        max_res = supabase.table("nh_property_types").select("sort_order") \
-                    .order("sort_order", desc=True).limit(1).execute()
-        next_order = (max_res.data[0]["sort_order"] + 1) if max_res.data else 1
-        supabase.table("nh_property_types").insert({
-            "label": label, "sort_order": next_order, "is_active": True,
-        }).execute()
-    except Exception as e:
-        print("ensure_property_type error:", e)
-
-
-def fetch_drug_types(only_active=False):
-    try:
-        q = supabase.table("nh_drug_types").select("*")
-        if only_active:
-            q = q.eq("is_active", True)
-        q = q.order("sort_order").order("id")
-        return q.execute().data or []
-    except Exception as e:
-        print("fetch_drug_types error:", e)
-        return []
-
-
-def fetch_active_drug_type_labels():
-    return [t["label"] for t in fetch_drug_types(only_active=True)]
-
-
-def ensure_drug_type(label):
-    label = (label or "").strip()
-    if not label:
-        return
-    try:
-        res = (supabase.table("nh_drug_types")
-               .select("id").ilike("label", label).limit(1).execute())
-        if res.data:
-            return
-        max_res = supabase.table("nh_drug_types").select("sort_order") \
-                    .order("sort_order", desc=True).limit(1).execute()
-        next_order = (max_res.data[0]["sort_order"] + 1) if max_res.data else 1
-        supabase.table("nh_drug_types").insert({
-            "label": label, "sort_order": next_order, "is_active": True,
-        }).execute()
-    except Exception as e:
-        print("ensure_drug_type error:", e)
 
 
 def fetch_drugs(drug_type=None, featured_only=False):
@@ -487,6 +420,22 @@ def fetch_drug(drug_id):
         return None
 
 
+def fetch_drug_types(only_active=False):
+    try:
+        q = supabase.table("nh_drug_types").select("*")
+        if only_active:
+            q = q.eq("is_active", True)
+        q = q.order("sort_order").order("id")
+        return q.execute().data or []
+    except Exception as e:
+        print("fetch_drug_types error:", e)
+        return []
+
+
+def fetch_active_drug_type_labels():
+    return [t["label"] for t in fetch_drug_types(only_active=True)]
+
+
 def fetch_videos():
     try:
         res = supabase.table("nh_videos").select("*").order("sort_order").order("id").execute()
@@ -498,8 +447,8 @@ def fetch_videos():
 
 def fetch_featured_video():
     try:
-        res = (supabase.table("nh_videos").select("*").eq("is_featured", True)
-               .order("sort_order").limit(1).execute())
+        res = supabase.table("nh_videos").select("*").eq("is_featured", True) \
+            .order("sort_order").limit(1).execute()
         if res.data:
             return res.data[0]
         res = supabase.table("nh_videos").select("*").order("sort_order").limit(1).execute()
@@ -512,8 +461,7 @@ def fetch_featured_video():
 def fetch_gallery():
     combined = []
     try:
-        res = (supabase.table("nh_gallery_images").select("*")
-               .order("sort_order").order("id").execute())
+        res = supabase.table("nh_gallery_images").select("*").order("sort_order").order("id").execute()
         for g in (res.data or []):
             combined.append({
                 "id":     f"u-{g['id']}",
@@ -526,8 +474,8 @@ def fetch_gallery():
         print("fetch_gallery upload error:", e)
 
     try:
-        res = (supabase.table("nh_projects").select("id, name, image, sort_order")
-               .not_.is_("image", "null").order("sort_order").order("id").execute())
+        res = supabase.table("nh_projects").select("id, name, image, sort_order") \
+            .not_.is_("image", "null").order("sort_order").order("id").execute()
         for p in (res.data or []):
             if p.get("image"):
                 combined.append({
@@ -566,7 +514,6 @@ def upload_to_bucket(file_storage, bucket, allowed_exts, max_bytes):
 
 
 def delete_from_bucket(url, bucket):
-    """Delete a file from a Supabase bucket given its public URL."""
     if not url:
         return
     try:
@@ -586,11 +533,11 @@ def save_image(file_storage, bucket=BUCKET_IMAGES):
     )
 
 
-def save_video(file_storage, max_bytes=MAX_VIDEO_BYTES):
+def save_video(file_storage):
     return upload_to_bucket(
         file_storage, BUCKET_VIDEOS,
         {"mp4", "webm", "mov", "m4v"},
-        max_bytes,
+        MAX_VIDEO_BYTES,
     )
 
 
@@ -652,7 +599,7 @@ def index():
         carousel_projects=carousel,
         grid_projects=grid,
         featured_video=fetch_featured_video(),
-        custom_types=fetch_custom_types(),
+        custom_types=[t["label"] for t in fetch_property_types(only_active=True)],
         drugs=fetch_drugs()[:8],
         drug_types=fetch_active_drug_type_labels(),
     )
@@ -672,7 +619,8 @@ def gallery_page():
 def projects():
     custom_type = (request.args.get("type") or "").strip()
     if custom_type:
-        project_list = fetch_projects(custom_type=custom_type)
+        project_list = fetch_projects()
+        project_list = [p for p in project_list if (p.get("custom_type") or "").lower() == custom_type.lower()]
         page_heading = custom_type.title()
         page_sub = f"All {custom_type.lower()} properties we have."
     else:
@@ -687,7 +635,7 @@ def projects():
         active_custom_type=custom_type or None,
         page_heading=page_heading,
         page_sub=page_sub,
-        custom_types=fetch_custom_types(),
+        custom_types=[t["label"] for t in fetch_property_types(only_active=True)],
     )
 
 
@@ -700,8 +648,8 @@ def project_detail(slug):
         "project_detail.html",
         project=project,
         images=fetch_project_images(project["id"]),
-        related=fetch_projects(category=project["category"])[:4],
-        max_images=MAX_PROJECT_IMAGES,
+        related=fetch_projects(category=project["category"])[:3],
+        max_images=7,
     )
 
 
@@ -714,7 +662,7 @@ def residentials():
         active_custom_type=None,
         page_heading=None,
         page_sub=None,
-        custom_types=fetch_custom_types(),
+        custom_types=[t["label"] for t in fetch_property_types(only_active=True)],
     )
 
 
@@ -727,7 +675,7 @@ def commercial():
         active_custom_type=None,
         page_heading=None,
         page_sub=None,
-        custom_types=fetch_custom_types(),
+        custom_types=[t["label"] for t in fetch_property_types(only_active=True)],
     )
 
 
@@ -1104,8 +1052,7 @@ def update_project_new():
         project=None,
         property_types=fetch_property_types(only_active=True),
         gallery_images=[],
-        max_images=MAX_PROJECT_IMAGES,
-        max_video_mb=MAX_PROJECT_VIDEO_BYTES // (1024 * 1024),
+        max_images=7,
     )
 
 
@@ -1126,8 +1073,7 @@ def update_project_edit(pid):
         project=project,
         property_types=fetch_property_types(only_active=True),
         gallery_images=fetch_project_images(pid),
-        max_images=MAX_PROJECT_IMAGES,
-        max_video_mb=MAX_PROJECT_VIDEO_BYTES // (1024 * 1024),
+        max_images=7,
     )
 
 
@@ -1162,14 +1108,7 @@ def _save_project(project):
 
     video_uploaded = None
     if "video_file" in request.files and request.files["video_file"].filename:
-        vfile = request.files["video_file"]
-        data = vfile.read()
-        if len(data) > MAX_PROJECT_VIDEO_BYTES:
-            flash(f"Video exceeds {MAX_PROJECT_VIDEO_BYTES // (1024*1024)}MB limit.", "error")
-            vfile.seek(0)
-        else:
-            vfile.seek(0)
-            video_uploaded = save_video(vfile, MAX_PROJECT_VIDEO_BYTES)
+        video_uploaded = save_video(request.files["video_file"])
 
     image = image_uploaded or request.form.get("image_url","").strip() or \
             (project["image"] if project else "")
@@ -1196,9 +1135,6 @@ def _save_project(project):
             payload["sort_order"] = 99
             supabase.table("nh_projects").insert(payload).execute()
             flash("Property created.", "success")
-
-        if custom_type:
-            ensure_property_type(custom_type)
     except Exception as e:
         print("save project error:", e)
         flash(f"Error: {e}", "error")
@@ -1209,10 +1145,14 @@ def _save_project(project):
 @login_required
 def update_project_delete(pid):
     try:
-        # Delete all gallery images for this project
-        for img in fetch_project_images(pid):
-            delete_from_bucket(img.get("image_url"), BUCKET_IMAGES)
-        supabase.table("nh_project_images").delete().eq("project_id", pid).execute()
+        try:
+            res = supabase.table("nh_project_images").select("*").eq("project_id", pid).execute()
+            for img in (res.data or []):
+                delete_from_bucket(img.get("image_url"), BUCKET_IMAGES)
+            supabase.table("nh_project_images").delete().eq("project_id", pid).execute()
+        except Exception as ge:
+            print("gallery cleanup skipped:", ge)
+
         supabase.table("nh_projects").delete().eq("id", pid).execute()
         flash("Property deleted.", "success")
     except Exception as e:
@@ -1234,8 +1174,8 @@ def update_project_gallery_add(pid):
         abort(404)
 
     existing = fetch_project_images(pid)
-    if len(existing) >= MAX_PROJECT_IMAGES:
-        flash(f"Maximum of {MAX_PROJECT_IMAGES} images per project.", "error")
+    if len(existing) >= 7:
+        flash("Maximum of 7 images per project.", "error")
         return redirect(url_for("update_project_edit", pid=pid))
 
     file = request.files.get("gallery_image")
@@ -1353,9 +1293,6 @@ def _save_drug(drug):
             payload["sort_order"] = 99
             supabase.table("nh_drugs").insert(payload).execute()
             flash("Product created.", "success")
-
-        if drug_type:
-            ensure_drug_type(drug_type)
     except Exception as e:
         print("save drug error:", e)
         flash(f"Error: {e}", "error")
