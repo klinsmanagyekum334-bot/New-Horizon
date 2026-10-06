@@ -15,6 +15,9 @@
   </a>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN EDIT FORM — closes cleanly before Gallery
+     ═══════════════════════════════════════════════════════════ -->
 <form method="POST"
       action="{{ url_for('update_project_edit', pid=project.id) if project else url_for('update_project_new') }}"
       enctype="multipart/form-data"
@@ -246,70 +249,6 @@
     </div>
   </div>
 
-  {% if project %}
-  <!-- ── Gallery (only editable after the project is saved) ── -->
-  <div class="update-panel">
-    <h2 class="update-panel-title">
-      <i class="fa-solid fa-images"></i> Gallery
-      <span class="update-hint" style="font-weight:400; margin-left:8px;">
-        ({{ gallery_images|length }} / {{ max_images }} images)
-      </span>
-    </h2>
-
-    {% if gallery_images %}
-    <div class="update-gallery-grid">
-      {% for img in gallery_images %}
-      <div class="update-gallery-tile">
-        <img src="{{ img.image_url }}" alt="{{ img.description or 'Gallery image' }}">
-        <div class="update-gallery-info">
-          <p>{{ img.description or "(no description)" }}</p>
-        </div>
-        <form method="POST"
-              action="{{ url_for('update_project_gallery_delete', img_id=img.id) }}"
-              onsubmit="return confirm('Delete this image?');">
-          <button type="submit" class="update-gallery-delete" title="Delete">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </form>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <p class="update-empty-text">No gallery images yet. Add up to {{ max_images }} below.</p>
-    {% endif %}
-
-    {% if gallery_images|length < max_images %}
-    <form method="POST"
-          action="{{ url_for('update_project_gallery_add', pid=project.id) }}"
-          enctype="multipart/form-data"
-          class="update-form"
-          style="margin-top: 18px;">
-      <div class="update-form-grid">
-        <div class="update-field">
-          <label for="gallery_image">Image (max 5MB)</label>
-          <input type="file" id="gallery_image" name="gallery_image"
-                 accept="image/*" required>
-        </div>
-        <div class="update-field">
-          <label for="gallery_description">Description (optional)</label>
-          <input type="text" id="gallery_description" name="gallery_description"
-                 placeholder="e.g. Floor plan, Front view, Back view">
-        </div>
-      </div>
-      <div class="update-form-actions" style="margin-top: 12px;">
-        <button type="submit" class="update-btn update-btn-primary">
-          <i class="fa-solid fa-plus"></i> Add Image
-        </button>
-      </div>
-    </form>
-    {% else %}
-    <p class="update-hint" style="margin-top: 14px;">
-      You have reached the maximum of {{ max_images }} images. Delete one to add another.
-    </p>
-    {% endif %}
-  </div>
-  {% endif %}
-
   <!-- ── Feature checkbox ── -->
   <div class="update-panel">
     <div class="update-field full update-checkbox-field">
@@ -332,8 +271,75 @@
     </button>
   </div>
 </form>
+<!-- ═══════════════════════════════════════════════════════════
+     ↑ MAIN FORM CLOSES HERE ↑
+     ═══════════════════════════════════════════════════════════ -->
 
 {% if project %}
+
+<!-- ── Gallery — its own independent form(s) ── -->
+<div class="update-panel">
+  <h2 class="update-panel-title">
+    <i class="fa-solid fa-images"></i> Gallery
+    <span class="update-hint" style="font-weight:400; margin-left:8px;">
+      ({{ gallery_images|length }} / {{ max_images }} images)
+    </span>
+  </h2>
+
+  {% if gallery_images %}
+  <div class="update-gallery-grid">
+    {% for img in gallery_images %}
+    <div class="update-gallery-tile">
+      <img src="{{ img.image_url }}" alt="{{ img.description or 'Gallery image' }}">
+      <div class="update-gallery-info">
+        <p>{{ img.description or "(no description)" }}</p>
+      </div>
+      <form method="POST"
+            action="{{ url_for('update_project_gallery_delete', img_id=img.id) }}"
+            onsubmit="return confirm('Delete this image?');">
+        <button type="submit" class="update-gallery-delete" title="Delete">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="update-empty-text">No gallery images yet. Add up to {{ max_images }} below.</p>
+  {% endif %}
+
+  {% if gallery_images|length < max_images %}
+  <form method="POST"
+        action="{{ url_for('update_project_gallery_add', pid=project.id) }}"
+        enctype="multipart/form-data"
+        class="update-form"
+        style="margin-top: 18px;">
+    <div class="update-form-grid">
+      <div class="update-field">
+        <label for="gallery_image">Image (max 5MB)</label>
+        <input type="file" id="gallery_image" name="gallery_image"
+               accept="image/*" required>
+      </div>
+      <div class="update-field">
+        <label for="gallery_description">Description (optional)</label>
+        <input type="text" id="gallery_description" name="gallery_description"
+               placeholder="e.g. Floor plan, Front view, Back view">
+      </div>
+    </div>
+    <div class="update-form-actions" style="margin-top: 12px;">
+      <button type="submit" class="update-btn update-btn-primary">
+        <i class="fa-solid fa-plus"></i> Add Image
+      </button>
+    </div>
+  </form>
+  {% else %}
+  <p class="update-hint" style="margin-top: 14px;">
+    You have reached the maximum of {{ max_images }} images. Delete one to add another.
+  </p>
+  {% endif %}
+</div>
+
+<!-- ── Danger Zone — its own independent form ── -->
 <div class="update-panel update-panel-danger">
   <h2 class="update-panel-title"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h2>
   <p class="update-hint" style="margin-bottom: 14px;">
@@ -351,7 +357,6 @@
 {% endif %}
 
 <script>
-  // Show/hide custom type based on category
   function toggleCustomType() {
     const sel  = document.getElementById('category');
     const wrap = document.getElementById('customTypeWrap');
@@ -360,7 +365,6 @@
   }
   document.addEventListener('DOMContentLoaded', toggleCustomType);
 
-  // Image previews
   function previewFile(input, targetId) {
     if (!input.files || !input.files[0]) return;
     const reader = new FileReader();
@@ -372,7 +376,6 @@
     if (v) document.getElementById(targetId).src = v;
   }
 
-  // Auto-fill slug from name (only when creating new)
   {% if not project %}
   document.addEventListener('DOMContentLoaded', () => {
     const nameInput = document.getElementById('name');
