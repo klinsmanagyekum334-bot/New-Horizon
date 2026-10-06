@@ -1,53 +1,102 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Update Login — New Horizon</title>
+{% extends "update/base_update.html" %}
+{% block title %}Dashboard — Control Panel{% endblock %}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/update.css') }}">
-</head>
-<body class="update-login-body">
+{% block content %}
 
-<div class="update-login-card">
-
-  <div class="update-login-icon">
-    <i class="fa-solid fa-lock"></i>
+<div class="update-page-head">
+  <div>
+    <h1 class="update-page-title">Dashboard</h1>
+    <p class="update-page-sub">
+      Welcome back — here's a quick look at what's on your site.
+    </p>
   </div>
+  <a href="{{ url_for('index') }}" target="_blank" class="update-btn update-btn-secondary">
+    <i class="fa-solid fa-eye"></i> View Site
+  </a>
+</div>
 
-  <h1>Control Panel</h1>
-  <p class="update-login-sub">New Horizon Coopers Limited</p>
+<div class="update-stats-grid">
 
-  {% with msgs = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in msgs %}
-      <div class="update-flash update-flash-{{ cat }}">
-        <i class="fa-solid {% if cat == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %}"></i>
-        {{ msg }}
-      </div>
-    {% endfor %}
-  {% endwith %}
+  <a href="{{ url_for('update_projects') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-purple">
+      <i class="fa-solid fa-building"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.projects }}</strong>
+      <span class="update-stat-label">Properties</span>
+    </div>
+  </a>
 
-  <form method="POST" action="{{ url_for('update_login') }}">
-    <input type="password"
-           name="password"
-           placeholder="Enter admin password"
-           required
-           autofocus
-           autocomplete="current-password">
-    <button type="submit" class="update-btn update-btn-primary">
-      <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
-    </button>
-  </form>
+  <a href="{{ url_for('update_property_types') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-purple">
+      <i class="fa-solid fa-tags"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.types }}</strong>
+      <span class="update-stat-label">Property Types</span>
+    </div>
+  </a>
 
-  <a href="{{ url_for('index') }}" class="update-login-back">
-    <i class="fa-solid fa-arrow-left"></i> Back to site
+  <a href="{{ url_for('update_drugs') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-green">
+      <i class="fa-solid fa-prescription-bottle-medical"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.drugs }}</strong>
+      <span class="update-stat-label">Pharma Products</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('update_drug_types') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-green">
+      <i class="fa-solid fa-capsules"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.drug_types }}</strong>
+      <span class="update-stat-label">Pharma Categories</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('update_videos') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-orange">
+      <i class="fa-solid fa-video"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.videos }}</strong>
+      <span class="update-stat-label">Videos</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('update_gallery') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-orange">
+      <i class="fa-solid fa-images"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.gallery }}</strong>
+      <span class="update-stat-label">Gallery Images</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('update_nav') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-purple">
+      <i class="fa-solid fa-bars"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.nav }}</strong>
+      <span class="update-stat-label">Nav Links</span>
+    </div>
+  </a>
+
+  <a href="{{ url_for('update_inquiries') }}" class="update-stat-card">
+    <div class="update-stat-icon update-stat-icon-orange">
+      <i class="fa-solid fa-envelope-open-text"></i>
+    </div>
+    <div class="update-stat-body">
+      <strong class="update-stat-num">{{ stats.inquiries }}</strong>
+      <span class="update-stat-label">Inquiries</span>
+    </div>
   </a>
 
 </div>
 
-</body>
-</html>
+{% endblock %}
