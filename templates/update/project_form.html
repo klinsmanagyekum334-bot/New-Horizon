@@ -120,17 +120,25 @@
       </div>
 
       <div class="update-field full">
-        <label for="short_desc">Description</label>
+        <label for="short_desc">Short Description</label>
         <input type="text" id="short_desc" name="short_desc"
                value="{{ project.short_desc if project else '' }}"
                placeholder="e.g. 2 Bedrooms · 2 Baths · 180 sqm">
-        <p class="update-hint">Shown as an amenity pill on the card.</p>
+        <p class="update-hint">Shown as an amenity pill on the card and as a summary on the detail page.</p>
       </div>
 
       <div class="update-field full">
-        <label for="long_desc">Full Details (optional)</label>
-        <textarea id="long_desc" name="long_desc" rows="5"
-                  placeholder="Full property description shown on the detail page.">{{ project.long_desc if project else '' }}</textarea>
+        <label for="long_desc">Full Description *</label>
+        <textarea id="long_desc" name="long_desc" rows="6" required
+                  placeholder="Full property description shown on the detail page (required).">{{ project.long_desc if project else '' }}</textarea>
+        <p class="update-hint">This is the introduction / main description shown at the top of the detail page.</p>
+      </div>
+
+      <div class="update-field full">
+        <label for="units">Units Available</label>
+        <input type="text" id="units" name="units"
+               value="{{ project.units if project else '' }}"
+               placeholder="e.g. 48 Villas">
       </div>
     </div>
   </div>
@@ -141,7 +149,7 @@
 
     <!-- Card image -->
     <div class="update-field full update-image-field">
-      <label>Card Image</label>
+      <label>Card Image (shown on the housing card &amp; homepage)</label>
       <div class="update-image-row">
         <div class="update-image-preview">
           <img id="preview_image"
@@ -170,7 +178,7 @@
 
     <!-- Hero image -->
     <div class="update-field full update-image-field">
-      <label>Hero Image (large banner on detail page)</label>
+      <label>Hero Image (large banner on the detail page)</label>
       <div class="update-image-row">
         <div class="update-image-preview">
           <img id="preview_hero"
@@ -199,7 +207,7 @@
 
     <!-- Video -->
     <div class="update-field full update-image-field">
-      <label>Property Video (optional)</label>
+      <label>Property Video (optional · 1 video per property)</label>
       <div class="update-image-row">
         <div class="update-image-preview">
           {% if project and project.video %}
@@ -226,11 +234,81 @@
                    value="{% if project and project.video and not project.video.startswith('/static/') %}{{ project.video }}{% endif %}"
                    placeholder="https://... or /static/uploads/nh-videos/xyz.mp4">
           </div>
-          <p class="update-hint">Max 20MB · MP4, WebM, or MOV</p>
+          <div class="update-field">
+            <label for="video_description">Video description (optional)</label>
+            <input type="text" id="video_description" name="video_description"
+                   value="{{ project.video_description if project and project.video_description else '' }}"
+                   placeholder="e.g. Aerial view of the house">
+          </div>
+          <p class="update-hint">Max {{ max_video_mb }}MB · MP4, WebM, or MOV</p>
         </div>
       </div>
     </div>
   </div>
+
+  {% if project %}
+  <!-- ── Gallery (only editable after the project is saved) ── -->
+  <div class="update-panel">
+    <h2 class="update-panel-title">
+      <i class="fa-solid fa-images"></i> Gallery
+      <span class="update-hint" style="font-weight:400; margin-left:8px;">
+        ({{ gallery_images|length }} / {{ max_images }} images)
+      </span>
+    </h2>
+
+    {% if gallery_images %}
+    <div class="update-gallery-grid">
+      {% for img in gallery_images %}
+      <div class="update-gallery-tile">
+        <img src="{{ img.image_url }}" alt="{{ img.description or 'Gallery image' }}">
+        <div class="update-gallery-info">
+          <p>{{ img.description or "(no description)" }}</p>
+        </div>
+        <form method="POST"
+              action="{{ url_for('update_project_gallery_delete', img_id=img.id) }}"
+              onsubmit="return confirm('Delete this image?');">
+          <button type="submit" class="update-gallery-delete" title="Delete">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="update-empty-text">No gallery images yet. Add up to {{ max_images }} below.</p>
+    {% endif %}
+
+    {% if gallery_images|length < max_images %}
+    <form method="POST"
+          action="{{ url_for('update_project_gallery_add', pid=project.id) }}"
+          enctype="multipart/form-data"
+          class="update-form"
+          style="margin-top: 18px;">
+      <div class="update-form-grid">
+        <div class="update-field">
+          <label for="gallery_image">Image (max 5MB)</label>
+          <input type="file" id="gallery_image" name="gallery_image"
+                 accept="image/*" required>
+        </div>
+        <div class="update-field">
+          <label for="gallery_description">Description (optional)</label>
+          <input type="text" id="gallery_description" name="gallery_description"
+                 placeholder="e.g. Floor plan, Front view, Back view">
+        </div>
+      </div>
+      <div class="update-form-actions" style="margin-top: 12px;">
+        <button type="submit" class="update-btn update-btn-primary">
+          <i class="fa-solid fa-plus"></i> Add Image
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <p class="update-hint" style="margin-top: 14px;">
+      You have reached the maximum of {{ max_images }} images. Delete one to add another.
+    </p>
+    {% endif %}
+  </div>
+  {% endif %}
 
   <!-- ── Feature checkbox ── -->
   <div class="update-panel">
@@ -238,7 +316,7 @@
       <label class="update-checkbox">
         <input type="checkbox" name="featured"
                {% if project and project.featured %}checked{% endif %}>
-        <span><strong>Feature on main page</strong> — highlighted in the Estates section on the homepage</span>
+        <span><strong>Feature on main page</strong> — highlighted in the Real Estates section on the homepage</span>
       </label>
     </div>
   </div>
@@ -259,7 +337,7 @@
 <div class="update-panel update-panel-danger">
   <h2 class="update-panel-title"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h2>
   <p class="update-hint" style="margin-bottom: 14px;">
-    Deleting a property is permanent. The images, video and listing data will be removed from the database.
+    Deleting a property is permanent. The images, gallery, video and listing data will be removed from the database.
   </p>
   <form method="POST"
         action="{{ url_for('update_project_delete', pid=project.id) }}"

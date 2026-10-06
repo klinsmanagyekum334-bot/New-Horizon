@@ -4,7 +4,7 @@
 {% block content %}
 
 <!-- ═══════════════════════════════════════════════════════
-     HERO — full-bleed image with title overlay
+     HERO
      ═══════════════════════════════════════════════════════ -->
 <section class="nh-pd-hero">
   <img src="{{ project.hero_image or project.image or ('https://picsum.photos/seed/' ~ project.slug ~ '/1600/900') }}"
@@ -15,7 +15,7 @@
   <div class="nh-container nh-pd-hero-inner">
 
     <a href="{{ url_for('projects') }}" class="nh-pd-back">
-      <i class="fa-solid fa-arrow-left"></i> Back to Properties
+      <i class="fa-solid fa-arrow-left"></i> Back to Housing
     </a>
 
     <div class="nh-pd-hero-badges">
@@ -45,9 +45,6 @@
       {% if project.location %}
       <span><i class="fa-solid fa-location-dot"></i> {{ project.location }}</span>
       {% endif %}
-      {% if project.short_desc %}
-      <span><i class="fa-solid fa-house"></i> {{ project.short_desc }}</span>
-      {% endif %}
       {% if project.price_from %}
       <span>
         <i class="fa-solid fa-tag"></i>
@@ -59,27 +56,13 @@
         {% endif %}
       </span>
       {% endif %}
+      {% if project.units %}
+      <span><i class="fa-solid fa-house"></i> {{ project.units }}</span>
+      {% endif %}
     </div>
 
   </div>
 </section>
-
-{% if project.video %}
-<!-- ═══════════════════════════════════════════════════════
-     PROJECT VIDEO
-     ═══════════════════════════════════════════════════════ -->
-<section class="nh-pd-video">
-  <div class="nh-container">
-    <div class="nh-pd-video-card">
-      <video class="nh-pd-video-player" controls preload="metadata"
-             poster="{{ project.hero_image or project.image or '' }}">
-        <source src="{{ project.video }}" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-  </div>
-</section>
-{% endif %}
 
 <!-- ═══════════════════════════════════════════════════════
      MAIN CONTENT
@@ -87,9 +70,10 @@
 <section class="nh-pd-content">
   <div class="nh-container nh-pd-layout">
 
-    <!-- LEFT -->
+    <!-- LEFT — description, gallery, video -->
     <div class="nh-pd-main">
 
+      <!-- About -->
       <div class="nh-pd-block">
         <h2 class="nh-pd-heading">About This Property</h2>
         <p class="nh-pd-text">
@@ -97,6 +81,7 @@
         </p>
       </div>
 
+      <!-- Property details -->
       <div class="nh-pd-block">
         <h2 class="nh-pd-heading">Property Details</h2>
 
@@ -151,7 +136,7 @@
 
           {% if project.short_desc %}
           <div class="nh-pd-detail-item">
-            <span class="nh-pd-detail-label">Description</span>
+            <span class="nh-pd-detail-label">Summary</span>
             <span class="nh-pd-detail-value">{{ project.short_desc }}</span>
           </div>
           {% endif %}
@@ -159,9 +144,47 @@
         </div>
       </div>
 
+      <!-- Gallery — images with descriptions -->
+      {% if images %}
+      <div class="nh-pd-block">
+        <h2 class="nh-pd-heading">Gallery</h2>
+
+        <div class="nh-pd-gallery">
+          {% for img in images %}
+          <figure class="nh-pd-gallery-item">
+            <div class="nh-pd-gallery-media">
+              <img src="{{ img.image_url }}" alt="{{ img.description or project.name }}" loading="lazy">
+            </div>
+            {% if img.description %}
+            <figcaption class="nh-pd-gallery-caption">{{ img.description }}</figcaption>
+            {% endif %}
+          </figure>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Video -->
+      {% if project.video %}
+      <div class="nh-pd-block">
+        <h2 class="nh-pd-heading">Video</h2>
+
+        <div class="nh-pd-video-card">
+          <video class="nh-pd-video-player" controls preload="metadata"
+                 poster="{{ project.hero_image or project.image or '' }}">
+            <source src="{{ project.video }}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          {% if project.video_description %}
+          <p class="nh-pd-video-caption">{{ project.video_description }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
     </div>
 
-    <!-- RIGHT — sidebar CTA -->
+    <!-- RIGHT — sticky sidebar (Send an Enquiry only) -->
     <aside class="nh-pd-side">
       <div class="nh-pd-side-card">
 
@@ -170,11 +193,7 @@
           Contact our sales team for pricing, availability, site visits and full brochures.
         </p>
 
-        <a href="{{ url_for('book') }}" class="nh-pd-side-btn nh-pd-side-btn-primary">
-          <i class="fa-solid fa-phone"></i> Book a Consultation
-        </a>
-
-        <a href="{{ url_for('contact') }}" class="nh-pd-side-btn nh-pd-side-btn-outline">
+        <a href="{{ url_for('contact') }}" class="nh-pd-side-btn nh-pd-side-btn-primary">
           <i class="fa-solid fa-envelope"></i> Send an Enquiry
         </a>
 
@@ -206,7 +225,7 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════
-     RELATED PROPERTIES
+     RELATED
      ═══════════════════════════════════════════════════════ -->
 {% if related %}
 <section class="nh-pd-related">
@@ -225,85 +244,43 @@
       <p class="nh-pd-related-sub">Explore more of our developments.</p>
     </div>
 
-    <div class="nh-listings-grid">
+    <div class="housing-grid">
       {% for p in related %}
         {% if p.slug != project.slug %}
-        <article class="nh-listing-card">
-
-          <div class="nh-listing-media">
+        <article class="housing-card">
+          <a href="{{ url_for('project_detail', slug=p.slug) }}" class="housing-card-media">
             <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/800/500' }}"
                  alt="{{ p.name }}" loading="lazy">
-
-            {% if p.featured %}
-            <span class="nh-listing-badge nh-listing-badge-featured">
-              <i class="fa-solid fa-star"></i> Featured
-            </span>
-            {% else %}
-            <span class="nh-listing-badge nh-listing-badge-verified">
-              <i class="fa-solid fa-circle-check"></i> Verified
-            </span>
-            {% endif %}
-
-            {% if p.video %}
-            <span class="nh-listing-video-badge">
-              <i class="fa-solid fa-circle-play"></i> Video
-            </span>
-            {% endif %}
-
-            <a href="{{ url_for('project_detail', slug=p.slug) }}"
-               class="nh-listing-fav" aria-label="Save">
-              <i class="fa-regular fa-heart"></i>
-            </a>
-
-            <span class="nh-listing-cat">
-              {% if p.category == 'other' and p.custom_type %}
-                {{ p.custom_type | upper }}
-              {% else %}
-                {{ p.category | upper }}
-              {% endif %}
-              {% if p.status %} · {{ p.status | replace('-', ' ') | upper }}{% endif %}
-            </span>
-          </div>
-
-          <div class="nh-listing-body">
-            <h3 class="nh-listing-name">{{ p.name }}</h3>
-
+          </a>
+          <div class="housing-card-body">
+            <h3 class="housing-card-name">
+              <a href="{{ url_for('project_detail', slug=p.slug) }}">{{ p.name }}</a>
+            </h3>
             {% if p.location %}
-            <p class="nh-listing-loc">
-              <i class="fa-solid fa-location-dot"></i>
-              {{ p.location }}
+            <p class="housing-card-loc">
+              <i class="fa-solid fa-location-dot"></i> {{ p.location }}
             </p>
             {% endif %}
-
-            <div class="nh-listing-amen">
-              {% if p.short_desc %}
-              <span><i class="fa-solid fa-house"></i> {{ p.short_desc }}</span>
-              {% endif %}
-
-              <span>
-                <i class="fa-solid fa-tag"></i>
-                {% if p.category == 'other' and p.custom_type %}
-                  {{ p.custom_type | capitalize }}
+            {% if p.short_desc %}
+            <p class="housing-card-desc">{{ p.short_desc }}</p>
+            {% endif %}
+            <div class="housing-card-footer">
+              <span class="housing-card-price">
+                {% if p.price_from %}
+                  {% if p.currency == 'USD' %}
+                    From ${{ "{:,}".format(p.price_from|int) }}
+                  {% else %}
+                    From GHS {{ "{:,}".format(p.price_from|int) }}
+                  {% endif %}
                 {% else %}
-                  {{ p.category | capitalize }}
+                  Price on request
                 {% endif %}
               </span>
-            </div>
-
-            <div class="nh-listing-bottom">
-              <span class="nh-listing-price">
-                {% if p.currency == 'USD' %}
-                  ${{ "{:,}".format(p.price_from|int) }}
-                {% else %}
-                  GHS {{ "{:,}".format(p.price_from|int) }}
-                {% endif %}
-              </span>
-              <a href="{{ url_for('project_detail', slug=p.slug) }}" class="nh-listing-cta">
-                View Details
+              <a href="{{ url_for('project_detail', slug=p.slug) }}" class="housing-card-cta">
+                See full details <i class="fa-solid fa-arrow-right"></i>
               </a>
             </div>
           </div>
-
         </article>
         {% endif %}
       {% endfor %}

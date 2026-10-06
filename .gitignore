@@ -1,4 +1,10 @@
-.env
-nh.db
+venv/
 __pycache__/
 *.pyc
+.env
+nh.db
+.DS_Store
+static/uploads/*
+!static/uploads/.gitkeep
+
+

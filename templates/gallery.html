@@ -1,77 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Gallery — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+{% block title %}Pictures — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
 
 {% block content %}
 
-<!-- ============================================================
-     PAGE HEADER
-     ============================================================ -->
-<section class="page-header">
-  <div class="container">
-    <span class="page-header-eyebrow">OUR PORTFOLIO</span>
-    <h1 class="page-header-title">Gallery</h1>
-    <p class="page-header-sub">
-      Explore our properties, projects and lifestyle.
+<!-- ═══════════════════════════════════════════════════════
+     PAGE HEADER — purple
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-pics-header">
+  <div class="nh-container">
+    <span class="nh-pics-eyebrow">
+      <i class="fa-solid fa-images"></i> Pictures
+    </span>
+    <h1 class="nh-pics-title">
+      Our <em>Gallery</em>
+    </h1>
+    <p class="nh-pics-sub">
+      A visual journey through our properties, projects and lifestyle.
     </p>
   </div>
 </section>
 
-<!-- ============================================================
-     GALLERY GRID
-     ============================================================ -->
-<section class="section section-white">
-  <div class="container">
+<!-- ═══════════════════════════════════════════════════════
+     GRID — all pictures, tap to view full screen
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-pics-grid-section">
+  <div class="nh-container">
 
     {% if images %}
 
-    <!-- Filter row -->
-    <div class="gallery-filter">
-      <button class="gallery-filter-btn active" data-filter="all">
-        <i class="fa-solid fa-border-all"></i> All
-        <span class="gallery-filter-count">{{ images|length }}</span>
-      </button>
-      <button class="gallery-filter-btn" data-filter="upload">
-        <i class="fa-solid fa-upload"></i> Uploaded
-        <span class="gallery-filter-count">
-          {{ images | selectattr("source", "equalto", "upload") | list | length }}
-        </span>
-      </button>
-      <button class="gallery-filter-btn" data-filter="project">
-        <i class="fa-solid fa-building"></i> From Projects
-        <span class="gallery-filter-count">
-          {{ images | selectattr("source", "equalto", "project") | list | length }}
-        </span>
-      </button>
-    </div>
-
-    <!-- Masonry-style grid -->
-    <div class="gallery-grid" id="galleryGrid">
+    <div class="nh-pics-grid" id="nhPicsGrid">
       {% for img in images %}
-      <div class="gallery-tile"
-           data-source="{{ img.source }}"
-           data-src="{{ img.src }}"
-           data-title="{{ img.title or '' }}">
-        <img src="{{ img.src }}" alt="{{ img.title or 'Gallery image' }}" loading="lazy">
-        <div class="gallery-overlay">
-          {% if img.title %}
-          <span class="gallery-caption">{{ img.title }}</span>
-          {% else %}
-          <span class="gallery-caption">{{ img.source | capitalize }}</span>
-          {% endif %}
-          <span class="gallery-zoom">
-            <i class="fa-solid fa-magnifying-glass-plus"></i>
-          </span>
-        </div>
-      </div>
+      <button type="button"
+              class="nh-pics-tile"
+              data-index="{{ loop.index0 }}"
+              data-src="{{ img.src }}"
+              aria-label="Open picture">
+        <img src="{{ img.src }}" alt="Gallery picture" loading="lazy">
+      </button>
       {% endfor %}
     </div>
 
     {% else %}
 
-    <div class="empty-state">
+    <div class="nh-pics-empty">
       <i class="fa-regular fa-images"></i>
-      <h3>No images yet</h3>
-      <p>Uploaded gallery images and project photos will appear here.</p>
+      <h3>No pictures yet</h3>
+      <p>Uploaded pictures will appear here.</p>
     </div>
 
     {% endif %}
@@ -79,138 +53,76 @@
   </div>
 </section>
 
-<!-- ============================================================
-     LIGHTBOX
-     ============================================================ -->
-<div class="gallery-lightbox" id="galleryLightbox" aria-hidden="true">
-  <button class="glb-close" id="glbClose" aria-label="Close">
+<!-- ═══════════════════════════════════════════════════════
+     LIGHTBOX — full screen view
+     ═══════════════════════════════════════════════════════ -->
+<div class="nh-pics-lb" id="nhPicsLb" aria-hidden="true">
+  <button class="nh-pics-lb-close" id="nhPicsLbClose" aria-label="Close">
     <i class="fa-solid fa-xmark"></i>
   </button>
-  <button class="glb-nav glb-prev" id="glbPrev" aria-label="Previous">
+  <button class="nh-pics-lb-nav nh-pics-lb-prev" id="nhPicsLbPrev" aria-label="Previous">
     <i class="fa-solid fa-chevron-left"></i>
   </button>
-  <button class="glb-nav glb-next" id="glbNext" aria-label="Next">
+  <button class="nh-pics-lb-nav nh-pics-lb-next" id="nhPicsLbNext" aria-label="Next">
     <i class="fa-solid fa-chevron-right"></i>
   </button>
 
-  <div class="glb-stage">
-    <img id="glbImage" src="" alt="">
-    <p class="glb-caption" id="glbCaption"></p>
-    <p class="glb-counter" id="glbCounter"></p>
+  <div class="nh-pics-lb-stage" id="nhPicsLbStage">
+    <img id="nhPicsLbImg" src="" alt="">
   </div>
+  <p class="nh-pics-lb-counter" id="nhPicsLbCounter"></p>
 </div>
 
-<!-- ============================================================
-     CTA BAND
-     ============================================================ -->
-<section class="section">
-  <div class="container">
-    <div class="cta-band">
-      <div class="cta-band-text">
-        <h3>Liked what you saw?</h3>
-        <p>Book a free consultation and let's find your perfect property.</p>
-      </div>
-      <a href="{{ url_for('book') }}" class="btn-primary">
-        <i class="fa-solid fa-phone"></i> Book Consultation
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ============================================================
-     GALLERY SCRIPT
-     ============================================================ -->
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  (function () {
+    const tiles   = Array.from(document.querySelectorAll('.nh-pics-tile'));
+    const lb      = document.getElementById('nhPicsLb');
+    const lbImg   = document.getElementById('nhPicsLbImg');
+    const lbCount = document.getElementById('nhPicsLbCounter');
+    const lbClose = document.getElementById('nhPicsLbClose');
+    const lbPrev  = document.getElementById('nhPicsLbPrev');
+    const lbNext  = document.getElementById('nhPicsLbNext');
 
-    // -------------------------------------------------------
-    // Filter
-    // -------------------------------------------------------
-    const filterButtons = document.querySelectorAll(".gallery-filter-btn");
-    const tiles = document.querySelectorAll(".gallery-tile");
+    if (!tiles.length || !lb) return;
 
-    filterButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        filterButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+    const list = tiles.map(t => t.dataset.src);
+    let idx = 0;
 
-        const filter = btn.dataset.filter;
-        tiles.forEach(tile => {
-          const show = filter === "all" || tile.dataset.source === filter;
-          tile.style.display = show ? "" : "none";
-        });
-      });
-    });
-
-    // -------------------------------------------------------
-    // Lightbox — works only on visible tiles
-    // -------------------------------------------------------
-    const lightbox = document.getElementById("galleryLightbox");
-    const lbImg    = document.getElementById("glbImage");
-    const lbCap    = document.getElementById("glbCaption");
-    const lbCnt    = document.getElementById("glbCounter");
-
-    let currentList = [];
-    let currentIdx  = 0;
-
-    function rebuildList() {
-      currentList = [...document.querySelectorAll(".gallery-tile")]
-        .filter(t => t.style.display !== "none")
-        .map(t => ({
-          src:   t.dataset.src,
-          title: t.dataset.title,
-        }));
-    }
-
-    function show(i) {
-      if (!currentList.length) return;
-      currentIdx = (i + currentList.length) % currentList.length;
-      const item = currentList[currentIdx];
-      lbImg.src = item.src;
-      lbCap.textContent = item.title || "";
-      lbCnt.textContent = `${currentIdx + 1} / ${currentList.length}`;
-    }
-
-    function open(i) {
-      rebuildList();
-      show(i);
-      lightbox.classList.add("open");
-      lightbox.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
+    function openAt(i) {
+      idx = (i + list.length) % list.length;
+      lbImg.src = list[idx];
+      lbCount.textContent = (idx + 1) + ' / ' + list.length;
+      lb.classList.add('open');
+      lb.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     }
     function close() {
-      lightbox.classList.remove("open");
-      lightbox.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
+      lb.classList.remove('open');
+      lb.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      lbImg.src = '';
     }
+    function show(i) { openAt(i); }
 
-    tiles.forEach(tile => {
-      tile.addEventListener("click", () => {
-        rebuildList();
-        const visible = [...document.querySelectorAll(".gallery-tile")]
-          .filter(t => t.style.display !== "none");
-        open(visible.indexOf(tile));
-      });
+    tiles.forEach((t, i) => {
+      t.addEventListener('click', () => openAt(i));
     });
 
-    document.getElementById("glbClose").addEventListener("click", close);
-    document.getElementById("glbPrev").addEventListener("click", (e) => {
-      e.stopPropagation(); show(currentIdx - 1);
-    });
-    document.getElementById("glbNext").addEventListener("click", (e) => {
-      e.stopPropagation(); show(currentIdx + 1);
-    });
-    lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) close();
+    lbClose.addEventListener('click', close);
+    lbPrev.addEventListener('click', (e) => { e.stopPropagation(); show(idx - 1); });
+    lbNext.addEventListener('click', (e) => { e.stopPropagation(); show(idx + 1); });
+
+    lb.addEventListener('click', (e) => {
+      if (e.target === lb) close();
     });
 
-    document.addEventListener("keydown", (e) => {
-      if (!lightbox.classList.contains("open")) return;
-      if (e.key === "Escape")     close();
-      if (e.key === "ArrowLeft")  show(currentIdx - 1);
-      if (e.key === "ArrowRight") show(currentIdx + 1);
+    document.addEventListener('keydown', (e) => {
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape')     close();
+      if (e.key === 'ArrowLeft')  show(idx - 1);
+      if (e.key === 'ArrowRight') show(idx + 1);
     });
-  });
+  })();
 </script>
 
 {% endblock %}

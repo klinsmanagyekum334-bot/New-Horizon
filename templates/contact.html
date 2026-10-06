@@ -4,12 +4,17 @@
 {% block content %}
 
 <!-- ═══════════════════════════════════════════════════════
-     PAGE HEADER
+     PAGE HEADER — purple
      ═══════════════════════════════════════════════════════ -->
-<section class="page-header">
-  <div class="container">
-    <h1 class="page-header-title">Contact Us</h1>
-    <p class="page-header-sub">
+<section class="nh-contact-header">
+  <div class="nh-container">
+    <span class="nh-contact-eyebrow">
+      <i class="fa-solid fa-envelope"></i> Get in touch
+    </span>
+    <h1 class="nh-contact-title">
+      Contact <em>Us</em>
+    </h1>
+    <p class="nh-contact-sub">
       Type your message below, then choose how you'd like to send it —
       WhatsApp or email. Either way, we'll get back to you shortly.
     </p>
@@ -19,96 +24,98 @@
 <!-- ═══════════════════════════════════════════════════════
      MESSAGE COMPOSER
      ═══════════════════════════════════════════════════════ -->
-<section class="section">
-  <div class="container">
-    <div class="contact-composer">
+<section class="nh-contact-body">
+  <div class="nh-container">
 
-      <div class="contact-composer-field">
+    <div class="nh-contact-composer">
+
+      <div class="nh-contact-field">
         <label for="cname">Your Name <span class="opt">(optional)</span></label>
         <input type="text" id="cname"
                placeholder="e.g. Appiah Enoch"
                maxlength="80" autocomplete="name">
       </div>
 
-      <div class="contact-composer-field">
+      <div class="nh-contact-field">
         <label for="cmessage">Your Message <span class="req">*</span></label>
-        <textarea id="cmessage" rows="9"
+        <textarea id="cmessage" rows="8"
                   placeholder="Tell us how we can help…"
                   maxlength="2000"></textarea>
       </div>
 
-      <div class="contact-composer-actions">
+      <div class="nh-contact-actions">
         <button type="button"
-                class="contact-send-btn contact-send-wa"
+                class="nh-contact-send nh-contact-send-wa"
                 onclick="sendViaWhatsApp()">
           <i class="fa-brands fa-whatsapp"></i>
           <span>Send via WhatsApp</span>
         </button>
 
         <button type="button"
-                class="contact-send-btn contact-send-email"
+                class="nh-contact-send nh-contact-send-email"
                 onclick="sendViaEmail()">
           <i class="fa-solid fa-envelope"></i>
           <span>Send via Email</span>
         </button>
       </div>
 
-      <p class="contact-composer-hint">
+      <p class="nh-contact-hint">
         <i class="fa-solid fa-circle-info"></i>
         Clicking a button opens WhatsApp or your email app with your message
         already filled in — ready for you to press send.
       </p>
 
     </div>
+
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════
      QUICK CONTACT INFO
      ═══════════════════════════════════════════════════════ -->
-<section class="section section-soft">
-  <div class="container">
-    <div class="contact-quick">
+<section class="nh-contact-quick-section">
+  <div class="nh-container">
+    <div class="nh-contact-quick">
 
       <a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}"
-         target="_blank" rel="noopener" class="contact-quick-item">
-        <div class="contact-quick-icon contact-quick-wa">
+         target="_blank" rel="noopener" class="nh-contact-quick-item">
+        <div class="nh-contact-quick-icon nh-contact-quick-wa">
           <i class="fa-brands fa-whatsapp"></i>
         </div>
         <div>
-          <span class="contact-quick-label">WhatsApp</span>
+          <span class="nh-contact-quick-label">WhatsApp</span>
           <strong>{{ site.contact_phone_display or "+233 24 344 4343" }}</strong>
         </div>
       </a>
 
       <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}"
-         class="contact-quick-item">
-        <div class="contact-quick-icon">
+         class="nh-contact-quick-item">
+        <div class="nh-contact-quick-icon">
           <i class="fa-solid fa-envelope"></i>
         </div>
         <div>
-          <span class="contact-quick-label">Email</span>
+          <span class="nh-contact-quick-label">Email</span>
           <strong>{{ site.contact_email or "info@newhorizongh.com" }}</strong>
         </div>
       </a>
 
       <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}"
-         class="contact-quick-item">
-        <div class="contact-quick-icon">
+         class="nh-contact-quick-item">
+        <div class="nh-contact-quick-icon">
           <i class="fa-solid fa-phone"></i>
         </div>
         <div>
-          <span class="contact-quick-label">Call</span>
+          <span class="nh-contact-quick-label">Call</span>
           <strong>{{ site.contact_phone_display or "+233 24 344 4343" }}</strong>
         </div>
       </a>
 
-      <div class="contact-quick-item contact-quick-static">
-        <div class="contact-quick-icon">
+      <div class="nh-contact-quick-item nh-contact-quick-static">
+        <div class="nh-contact-quick-icon">
           <i class="fa-solid fa-location-dot"></i>
         </div>
         <div>
-          <span class="contact-quick-label">Office</span>
+          <span class="nh-contact-quick-label">Office</span>
           <strong>{{ site.location_address or "Tema Community 25, Ghana" }}</strong>
         </div>
       </div>

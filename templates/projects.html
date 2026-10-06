@@ -7,17 +7,17 @@
   {% set page_heading = "Commercial Projects" %}
   {% set page_sub = "Premium office spaces, retail units and mixed-use developments for forward-thinking businesses." %}
 {% else %}
-  {% set page_heading = "Our Projects" %}
+  {% set page_heading = "Housing" %}
   {% set page_sub = "Explore our full portfolio of residential and commercial developments across Ghana." %}
 {% endif %}
 
-{% block title %}{{ page_heading }} — {{ site.brand_name or "EstateDev" }}{% endblock %}
+{% block title %}{{ page_heading }} — {{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
 
 {% block content %}
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      PAGE HEADER
-     ============================================================ -->
+     ═══════════════════════════════════════════════════════ -->
 <section class="page-header">
   <div class="container">
     <h1 class="page-header-title">{{ page_heading }}</h1>
@@ -25,21 +25,21 @@
   </div>
 </section>
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      FILTER TABS
-     ============================================================ -->
+     ═══════════════════════════════════════════════════════ -->
 <section class="projects-filter-section">
   <div class="container">
     <div class="filter-tabs">
 
       <a href="{{ url_for('projects') }}"
          class="filter-tab {% if not active_category %}active{% endif %}">
-        <i class="fa-solid fa-border-all"></i> All Projects
+        <i class="fa-solid fa-border-all"></i> All
       </a>
 
       <a href="{{ url_for('residentials') }}"
          class="filter-tab {% if active_category == 'residential' %}active{% endif %}">
-        <i class="fa-solid fa-house"></i> Residentials
+        <i class="fa-solid fa-house"></i> Residential
       </a>
 
       <a href="{{ url_for('commercial') }}"
@@ -51,43 +51,72 @@
   </div>
 </section>
 
-<!-- ============================================================
-     PROJECTS GRID
-     ============================================================ -->
+<!-- ═══════════════════════════════════════════════════════
+     HOUSING GRID
+     ═══════════════════════════════════════════════════════ -->
 <section class="section section-soft">
   <div class="container">
 
     {% if projects %}
 
-    <div class="projects-grid">
+    <div class="housing-grid">
 
       {% for p in projects %}
-      <article class="project-card">
+      <article class="housing-card">
 
-        <div class="project-image">
-          <span class="project-badge badge-{{ p.status }}">
-            {{ p.category | capitalize }} • {{ p.status | replace('-', ' ') | title }}
+        <!-- Picture -->
+        <a href="{{ url_for('project_detail', slug=p.slug) }}" class="housing-card-media">
+          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/800/500' }}"
+               alt="{{ p.name }}" loading="lazy">
+
+          {% if p.featured %}
+          <span class="housing-card-badge housing-card-badge-featured">
+            <i class="fa-solid fa-star"></i> Featured
           </span>
-          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/600/400' }}"
-               alt="{{ p.name }}">
-        </div>
+          {% else %}
+          <span class="housing-card-badge housing-card-badge-verified">
+            <i class="fa-solid fa-circle-check"></i> Verified
+          </span>
+          {% endif %}
 
-        <div class="project-body">
-          <h3 class="project-name">{{ p.name }}</h3>
-          <p class="project-desc">{{ p.short_desc }}</p>
+          {% if p.video %}
+          <span class="housing-card-video-badge">
+            <i class="fa-solid fa-circle-play"></i> Video
+          </span>
+          {% endif %}
+        </a>
 
-          <div class="project-meta">
+        <!-- Body -->
+        <div class="housing-card-body">
+          <h3 class="housing-card-name">
+            <a href="{{ url_for('project_detail', slug=p.slug) }}">{{ p.name }}</a>
+          </h3>
+
+          {% if p.location %}
+          <p class="housing-card-loc">
             <i class="fa-solid fa-location-dot"></i>
-            <span>{{ p.location }}{% if p.units %} • {{ p.units }}{% endif %}</span>
-          </div>
+            {{ p.location }}
+          </p>
+          {% endif %}
 
-          <div class="project-footer">
-            <div class="project-price">
-              <span class="label">From</span>
-              <span class="value">${{ "{:,}".format(p.price_from) }}</span>
-            </div>
-            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="project-learn">
-              Learn More <i class="fa-solid fa-arrow-right"></i>
+          {% if p.short_desc %}
+          <p class="housing-card-desc">{{ p.short_desc }}</p>
+          {% endif %}
+
+          <div class="housing-card-footer">
+            <span class="housing-card-price">
+              {% if p.price_from %}
+                {% if p.currency == 'USD' %}
+                  From ${{ "{:,}".format(p.price_from|int) }}
+                {% else %}
+                  From GHS {{ "{:,}".format(p.price_from|int) }}
+                {% endif %}
+              {% else %}
+                Price on request
+              {% endif %}
+            </span>
+            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="housing-card-cta">
+              See full details <i class="fa-solid fa-arrow-right"></i>
             </a>
           </div>
         </div>
@@ -101,13 +130,13 @@
 
     <div class="empty-state">
       <i class="fa-solid fa-building"></i>
-      <h3>No projects yet</h3>
+      <h3>No properties yet</h3>
       <p>
         {% if active_category %}
           There are no {{ active_category }} projects at the moment.
-          <a href="{{ url_for('projects') }}" style="color:var(--teal);font-weight:600;">View all projects →</a>
+          <a href="{{ url_for('projects') }}" style="color:var(--orange);font-weight:600;">View all →</a>
         {% else %}
-          Projects will appear here once the admin adds them.
+          Properties will appear here once the admin adds them.
         {% endif %}
       </p>
     </div>
@@ -117,9 +146,9 @@
   </div>
 </section>
 
-<!-- ============================================================
+<!-- ═══════════════════════════════════════════════════════
      CTA BAND
-     ============================================================ -->
+     ═══════════════════════════════════════════════════════ -->
 <section class="section">
   <div class="container">
     <div class="cta-band">

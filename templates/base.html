@@ -7,14 +7,14 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700;1,9..144,800&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400&family=Manrope:wght@300;400;500;600;700&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700;1,9..144,800&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400&family=Manrope:wght@300;400;500;600;700&family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
 
 <!-- ═══════════════════════════════════════════════════════
-     HEADER
+     HEADER — brand · nav · CTA  +  full-width search bar
      ═══════════════════════════════════════════════════════ -->
 <header class="nh-header {% block header_class %}{% endblock %}">
   <div class="nh-header-inner">
@@ -31,53 +31,51 @@
       </span>
     </a>
 
-    <nav class="nh-nav">
-      {% for link in nav_links %}
-      <a href="{{ link.url }}" class="{% if request.path == link.url %}active{% endif %}">{{ link.label }}</a>
-      {% endfor %}
+    <nav class="nh-nav-bar" aria-label="Primary">
+      <div class="nh-nav-bar-inner">
+        {% for link in nav_links %}
+        <a href="{{ link.url }}"
+           class="nh-nav-bar-link {% if request.path == link.url %}active{% endif %}">
+          {{ link.label }}
+        </a>
+        {% endfor %}
+      </div>
     </nav>
 
     <div class="nh-header-actions">
-      <button type="button" class="nh-icon-btn" id="searchToggle" aria-label="Search">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </button>
       <a href="{{ url_for('book') }}" class="nh-header-cta">
         {{ site.header_cta_text or "Book Consultation" }}
       </a>
-      <button type="button" class="nh-menu-btn" id="mobileToggle" aria-label="Menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
     </div>
 
   </div>
 
-  <!-- Search drawer -->
-  <div class="nh-search" id="searchDrawer">
-    <div class="nh-search-inner">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text"
-             id="siteSearchInput"
-             placeholder="{{ site.header_search_ph or 'Search properties, products, pages…' }}"
-             autocomplete="off">
-      <button type="button" class="nh-search-close" id="searchClose" aria-label="Close">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="nh-search-results" id="siteSearchResults">
-      <p class="nh-search-hint">
-        {{ site.search_hint or "Start typing to search pages, projects, and products." }}
-      </p>
+  <!-- ═══════════════════════════════════════════════════════
+       SEARCH BAR — full-width row under header (Google-style)
+       ═══════════════════════════════════════════════════════ -->
+  <div class="nh-search-bar" id="searchBar">
+    <div class="nh-search-bar-wrap">
+
+      <div class="nh-search-bar-inner">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="siteSearchInput"
+               placeholder="{{ site.header_search_ph or 'Search properties, products, pages…' }}"
+               autocomplete="off"
+               aria-label="Search the site">
+        <button type="button" class="nh-search-clear" id="searchClear" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="nh-search-results" id="siteSearchResults">
+        <p class="nh-search-hint">
+          {{ site.search_hint or "Start typing to search pages, projects, and products." }}
+        </p>
+      </div>
+
     </div>
   </div>
 
-  <!-- Mobile nav -->
-  <nav class="nh-mobile" id="mobileNav">
-    <div class="nh-mobile-links">
-      {% for link in nav_links %}
-      <a href="{{ link.url }}">{{ link.label }}</a>
-      {% endfor %}
-    </div>
-  </nav>
 </header>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -104,7 +102,7 @@
 <main>{% block content %}{% endblock %}</main>
 
 <!-- ═══════════════════════════════════════════════════════
-     FOOTER — purple background
+     FOOTER — purple
      ═══════════════════════════════════════════════════════ -->
 <footer class="nh-footer">
   <div class="nh-container">
@@ -142,12 +140,8 @@
         </div>
         <div class="nh-footer-col">
           <h5>{{ site.footer_col_contact or "Contact" }}</h5>
-          <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}">
-            {{ site.contact_phone_display or "+233 24 344 4343" }}
-          </a>
-          <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}">
-            {{ site.contact_email or "info@newhorizongh.com" }}
-          </a>
+          <a href="tel:{{ site.contact_whatsapp_num or '233243444343' }}">{{ site.contact_phone_display or "+233 24 344 4343" }}</a>
+          <a href="mailto:{{ site.contact_email or 'info@newhorizongh.com' }}">{{ site.contact_email or "info@newhorizongh.com" }}</a>
           <span>{{ site.location_address or "Tema Community 25, Ghana" }}</span>
         </div>
       </div>
@@ -155,7 +149,7 @@
 
     <div class="nh-footer-bottom">
       <span>{{ site.footer_copyright or "© 2026 New Horizon Coopers Limited" }}</span>
-      <span>Developed by <strong> Ophyser 0240044138 </strong></span>
+      <span>Developed by <strong>Ophyser</strong></span>
     </div>
 
   </div>
@@ -165,19 +159,15 @@
      FLOATING WHATSAPP
      ═══════════════════════════════════════════════════════ -->
 <a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}?text={{ 'Hello New Horizon!' | urlencode }}"
-   target="_blank"
-   rel="noopener"
-   class="nh-wa"
-   aria-label="WhatsApp">
+   target="_blank" rel="noopener" class="nh-wa" aria-label="WhatsApp">
   <i class="fa-brands fa-whatsapp"></i>
 </a>
 
 <!-- ═══════════════════════════════════════════════════════
-     SCRIPTS — mobile menu + live search with editable strings
+     SCRIPTS — full-width search bar logic
      ═══════════════════════════════════════════════════════ -->
 <script>
 (function () {
-  // Editable search messages pulled from the DB
   const SITE_STRINGS = {
     hint:        {{ (site.search_hint or "Start typing to search pages, projects, and products.") | tojson }},
     loading:     {{ (site.search_loading or "Searching…") | tojson }},
@@ -185,66 +175,42 @@
     unavailable: {{ (site.search_unavailable or "Search unavailable.") | tojson }}
   };
 
-  // ── Mobile menu toggle ──
-  const mt = document.getElementById("mobileToggle");
-  const mn = document.getElementById("mobileNav");
-  if (mt && mn) {
-    mt.addEventListener("click", () => {
-      mn.classList.toggle("open");
-      const i = mt.querySelector("i");
-      if (i) { i.classList.toggle("fa-bars"); i.classList.toggle("fa-xmark"); }
-    });
-  }
-
-  // ── Search drawer ──
-  const st = document.getElementById("searchToggle");
-  const sd = document.getElementById("searchDrawer");
-  const sc = document.getElementById("searchClose");
+  const sb = document.getElementById("searchBar");
   const si = document.getElementById("siteSearchInput");
   const sr = document.getElementById("siteSearchResults");
+  const sc = document.getElementById("searchClear");
   const HINT = '<p class="nh-search-hint">' + SITE_STRINGS.hint + '</p>';
   let timer;
 
-  function openS() {
-    if (sd) {
-      sd.classList.add("open");
-      setTimeout(() => si && si.focus(), 80);
-    }
+  function setHasValue(on) {
+    if (sb) sb.classList.toggle("has-value", on);
   }
-  function closeS() {
-    if (sd) {
-      sd.classList.remove("open");
-      if (si) si.value = "";
-      if (sr) sr.innerHTML = HINT;
-    }
-  }
-
-  if (st) st.addEventListener("click", openS);
-  if (sc) sc.addEventListener("click", closeS);
-  document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && sd && sd.classList.contains("open")) closeS();
-  });
+  function openResults()  { if (sr) sr.classList.add("open"); }
+  function closeResults() { if (sr) sr.classList.remove("open"); }
 
   function search(q) {
     q = (q || "").trim();
     if (!sr) return;
-    if (!q) { sr.innerHTML = HINT; return; }
-
+    if (!q) {
+      closeResults();
+      sr.innerHTML = HINT;
+      return;
+    }
+    openResults();
     sr.innerHTML = '<p class="nh-search-hint">' + SITE_STRINGS.loading + '</p>';
 
     fetch("/api/search?q=" + encodeURIComponent(q))
       .then(r => r.json())
       .then(items => {
-        if (!items || !items.length) {
+        if (!items.length) {
           sr.innerHTML = '<p class="nh-search-hint">' + SITE_STRINGS.noResults + '</p>';
           return;
         }
         sr.innerHTML = items.map(r =>
           '<a href="' + r.url + '" class="nh-search-item">' +
             '<i class="' + (r.icon || 'fa-solid fa-file') + '"></i>' +
-            '<span>' +
-              '<b>' + r.title + '</b>' +
-              (r.subtitle ? '<small>' + r.subtitle + '</small>' : '') +
+            '<span><b>' + r.title + '</b>' +
+            (r.subtitle ? '<small>' + r.subtitle + '</small>' : '') +
             '</span>' +
           '</a>'
         ).join("");
@@ -256,11 +222,39 @@
 
   if (si) {
     si.addEventListener("input", e => {
+      setHasValue(!!e.target.value.trim());
       clearTimeout(timer);
       const q = e.target.value;
       timer = setTimeout(() => search(q), 200);
     });
+    si.addEventListener("focus", () => {
+      if (si.value.trim()) openResults();
+    });
   }
+
+  if (sc) {
+    sc.addEventListener("click", () => {
+      si.value = "";
+      setHasValue(false);
+      closeResults();
+      if (sr) sr.innerHTML = HINT;
+      si.focus();
+    });
+  }
+
+  // Close results when clicking outside
+  document.addEventListener("click", e => {
+    if (!sb || !sr) return;
+    if (!sb.contains(e.target)) closeResults();
+  });
+
+  // Escape closes
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && sr && sr.classList.contains("open")) {
+      closeResults();
+      if (si) si.blur();
+    }
+  });
 })();
 </script>
 
