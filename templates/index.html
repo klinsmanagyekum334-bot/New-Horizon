@@ -5,19 +5,19 @@
 {% block content %}
 
 <!-- ═══════════════════════════════════════════════════════
-     HERO 1 — image1.jpg · clean image, NO text, NO overlay
+     HERO 1 — top image (editable from admin Site Content)
      ═══════════════════════════════════════════════════════ -->
 <section class="nh-hero nh-hero-primary" id="home">
   <div class="nh-hero-bg"
-       style="background-image: url('{{ url_for('static', filename='uploads/image1.jpg') }}');"></div>
+       style="background-image: url('{{ site.hero_image1 or url_for('static', filename='uploads/image1.jpg') }}');"></div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════
-     HERO 2 — image2.jpg · clean image, NO text, NO overlay
+     HERO 2 — below image (editable from admin Site Content)
      ═══════════════════════════════════════════════════════ -->
 <section class="nh-hero nh-hero-secondary" id="hero-secondary">
   <div class="nh-hero-bg"
-       style="background-image: url('{{ url_for('static', filename='uploads/image2.jpg') }}');"></div>
+       style="background-image: url('{{ site.hero_image2 or url_for('static', filename='uploads/image2.jpg') }}');"></div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -166,7 +166,6 @@
       <p class="nh-pharma-sub">{{ site.pharma_sub or "We stock the following" }}</p>
     </div>
 
-    <!-- 8-category menu -->
     {% set pharma_icons = {
         'Prescription Medications':       'fa-prescription',
         'Over-the-Counter Products':      'fa-pills',
@@ -202,7 +201,6 @@
       {% endfor %}
     </div>
 
-    <!-- Featured products (first 6) -->
     {% if drugs %}
     <div class="nh-pharma-grid-2">
       {% for d in drugs[:6] %}
