@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}{{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}
+{% block header_class %}{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO 1 — top image (editable from admin Site Content)
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-hero nh-hero-primary" id="home">
+  <div class="nh-hero-bg"
+       style="background-image: url('{{ site.hero_image1 or url_for('static', filename='uploads/image1.jpg') }}');"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO 2 — below image (editable from admin Site Content)
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-hero nh-hero-secondary" id="hero-secondary">
+  <div class="nh-hero-bg"
+       style="background-image: url('{{ site.hero_image2 or url_for('static', filename='uploads/image2.jpg') }}');"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     REAL ESTATES — tabs + property cards
+     (heading removed)
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-listings" id="estates">
+  <div class="nh-container">
+
+    <div class="nh-listings-tabs" role="tablist">
+      <a href="{{ url_for('projects') }}" class="nh-listings-tab active" data-tab="housing">
+        <span class="nh-listings-tab-icon"><i class="fa-solid fa-house"></i></span>
+        <span class="nh-listings-tab-label">Housing</span>
+      </a>
+      <a href="{{ url_for('gallery_page') }}" class="nh-listings-tab" data-tab="pictures">
+        <span class="nh-listings-tab-icon"><i class="fa-solid fa-images"></i></span>
+        <span class="nh-listings-tab-label">Pictures</span>
+      </a>
+      <a href="{{ url_for('videos_page') }}" class="nh-listings-tab" data-tab="videos">
+        <span class="nh-listings-tab-icon"><i class="fa-solid fa-video"></i></span>
+        <span class="nh-listings-tab-label">Videos</span>
+      </a>
+    </div>
+
+    {% if grid_projects %}
+    <div class="nh-listings-grid">
+      {% for p in grid_projects[:6] %}
+      <article class="nh-listing-card">
+
+        <div class="nh-listing-media">
+          <img src="{{ p.image if p.image else 'https://picsum.photos/seed/' ~ p.slug ~ '/800/500' }}"
+               alt="{{ p.name }}" loading="lazy">
+
+          {% if p.featured %}
+          <span class="nh-listing-badge nh-listing-badge-featured">
+            <i class="fa-solid fa-star"></i> Featured
+          </span>
+          {% else %}
+          <span class="nh-listing-badge nh-listing-badge-verified">
+            <i class="fa-solid fa-circle-check"></i> Verified
+          </span>
+          {% endif %}
+
+          {% if p.video %}
+          <button type="button"
+                  class="nh-listing-video-badge"
+                  onclick="nhPlayVideo('{{ p.video }}', '{{ p.name | e }}'); event.preventDefault(); event.stopPropagation();">
+            <i class="fa-solid fa-circle-play"></i> Video
+          </button>
+          {% endif %}
+
+          <a href="{{ url_for('project_detail', slug=p.slug) }}"
+             class="nh-listing-fav" aria-label="Save">
+            <i class="fa-regular fa-heart"></i>
+          </a>
+
+          <span class="nh-listing-cat">
+            {% if p.category == 'other' and p.custom_type %}
+              {{ p.custom_type | upper }}
+            {% else %}
+              {{ p.category | upper }}
+            {% endif %}
+            {% if p.status %} · {{ p.status | replace('-', ' ') | upper }}{% endif %}
+          </span>
+        </div>
+
+        <div class="nh-listing-body">
+          <h3 class="nh-listing-name">{{ p.name }}</h3>
+
+          {% if p.location %}
+          <p class="nh-listing-loc">
+            <i class="fa-solid fa-location-dot"></i>
+            {{ p.location }}
+          </p>
+          {% endif %}
+
+          <div class="nh-listing-amen">
+            {% if p.short_desc %}
+            <span><i class="fa-solid fa-house"></i> {{ p.short_desc }}</span>
+            {% endif %}
+
+            <span>
+              <i class="fa-solid fa-tag"></i>
+              {% if p.category == 'other' and p.custom_type %}
+                {{ p.custom_type | capitalize }}
+              {% else %}
+                {{ p.category | capitalize }}
+              {% endif %}
+            </span>
+
+            {% if p.status %}
+            <span>
+              <i class="fa-solid fa-signal"></i>
+              {{ p.status | replace('-', ' ') | title }}
+            </span>
+            {% endif %}
+          </div>
+
+          <div class="nh-listing-bottom">
+            <span class="nh-listing-price">
+              {% if p.currency == 'USD' %}
+                ${{ "{:,}".format(p.price_from|int) }}
+              {% else %}
+                GHS {{ "{:,}".format(p.price_from|int) }}
+              {% endif %}
+            </span>
+            <a href="{{ url_for('project_detail', slug=p.slug) }}" class="nh-listing-cta">
+              View Details
+            </a>
+          </div>
+        </div>
+
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="nh-listings-more">
+      <a href="{{ url_for('projects') }}" class="nh-listings-more-btn">
+        {{ site.estates_cta or "See all properties" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     CTA — deep orange band
+     ═══════════════════════════════════════════════════════ -->
+<section class="nh-cta">
+  <div class="nh-cta-bg"></div>
+  <div class="nh-container nh-cta-inner">
+    <span class="nh-eyebrow nh-eyebrow-light">{{ site.cta_eyebrow or "Let's talk" }}</span>
+    <h2 class="nh-cta-title">
+      {{ site.cta_title or "Ready to find your" }}<br>
+      <em>{{ site.cta_title_em or "next address?" }}</em>
+    </h2>
+    <p class="nh-cta-sub">
+      {{ site.cta_sub or "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away." }}
+    </p>
+    <div class="nh-cta-actions">
+      <a href="{{ url_for('book') }}" class="nh-btn-round nh-btn-round-light">
+        {{ site.cta_btn_primary or "Book a consultation" }}
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <a href="{{ url_for('contact') }}" class="nh-btn-round nh-btn-round-outline">
+        {{ site.cta_btn_secondary or "Contact us" }}
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     VIDEO LIGHTBOX
+     ═══════════════════════════════════════════════════════ -->
+<div class="nh-vlb" id="nhVlb" aria-hidden="true" onclick="nhCloseVideo(event)">
+  <button type="button" class="nh-vlb-close" onclick="nhCloseVideo(event)" aria-label="Close">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="nh-vlb-stage" onclick="event.stopPropagation();">
+    <video class="nh-vlb-player" id="nhVlbPlayer" controls preload="metadata">
+      <source src="" type="video/mp4">
+    </video>
+    <p class="nh-vlb-caption" id="nhVlbCaption"></p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const vlb     = document.getElementById('nhVlb');
+    const player  = document.getElementById('nhVlbPlayer');
+    const caption = document.getElementById('nhVlbCaption');
+
+    window.nhPlayVideo = function (url, name) {
+      if (!vlb || !player) return;
+      const src = player.querySelector('source');
+      if (src) src.src = url;
+      player.load();
+      if (caption) caption.textContent = name || '';
+      vlb.classList.add('open');
+      vlb.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => player.play().catch(() => {}), 100);
+    };
+
+    window.nhCloseVideo = function (ev) {
+      if (ev) ev.stopPropagation();
+      if (!vlb) return;
+      vlb.classList.remove('open');
+      vlb.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && vlb && vlb.classList.contains('open')) {
+        nhCloseVideo();
+      }
+    });
+  })();
+</script>
+
+{% endblock %}
