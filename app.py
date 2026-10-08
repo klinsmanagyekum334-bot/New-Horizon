@@ -14,11 +14,22 @@ load_dotenv()
 # ============================================================
 # CONFIG
 # ============================================================
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://soeenrjxrspfsexdiuip.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_mYvFcs9_OSA0PTIbcj4djg_NHGB8DXC")
+SUPABASE_URL         = os.environ.get("SUPABASE_URL", "https://soeenrjxrspfsexdiuip.supabase.co")
+SUPABASE_KEY         = os.environ.get("SUPABASE_KEY", "sb_publishable_mYvFcs9_OSA0PTIbcj4djg_NHGB8DXC")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", SUPABASE_KEY)
 
-SECRET_KEY     = os.environ.get("SECRET_KEY", "newhorizon-secret-2026-klinsman")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Klinsman@ophyser1")
+SECRET_KEY = os.environ.get("SECRET_KEY", "newhorizon-secret-2026-klinsman")
+
+# ── Admin passwords — BOTH work ──────────────────────────────
+ADMIN_PASSWORDS = [
+    "Klinsman@ophyser1",
+    "Horizon6202",
+]
+
+# Optional: override via env (comma-separated)
+_env_pwds = os.environ.get("ADMIN_PASSWORDS", "").strip()
+if _env_pwds:
+    ADMIN_PASSWORDS = [p.strip() for p in _env_pwds.split(",") if p.strip()]
 
 WHATSAPP_NUMBER = "233243444343"
 PHONE_NUMBER    = "+233243444343"
@@ -27,10 +38,11 @@ EMAIL_ADDRESS   = "info@newhorizongh.com"
 ADDRESS         = "Tema Community 25, Ghana"
 
 MAX_VIDEOS              = 10
-MAX_VIDEO_BYTES         = 20 * 1024 * 1024      # global video band
-MAX_IMAGE_BYTES         = 5  * 1024 * 1024
+MAX_VIDEO_BYTES         = 20 * 1024 * 1024      # 20 MB
+MAX_IMAGE_BYTES         = 15 * 1024 * 1024      # 15 MB
 MAX_PROJECT_IMAGES      = 7
-MAX_PROJECT_VIDEO_BYTES = 10 * 1024 * 1024      # per-project video
+MAX_PROJECT_VIDEO_BYTES = 20 * 1024 * 1024      # 20 MB
+MAX_FEATURED_ON_HOME    = 6                     # ⬅ homepage featured cap
 
 BUCKET_IMAGES  = "nh-images"
 BUCKET_GALLERY = "nh-gallery"
@@ -38,127 +50,108 @@ BUCKET_VIDEOS  = "nh-videos"
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 30 * 1024 * 1024
 
 app.config["SESSION_COOKIE_SECURE"]   = True
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-app.wsgi_app = ProxyFix(
-    app.wsgi_app,
-    x_for=1, x_proto=1, x_host=1, x_prefix=1
-)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Server-side Supabase client (service role bypasses RLS)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
 # ============================================================
-# SITE SCHEMA — editable content
+# SITE SCHEMA
 # ============================================================
 SITE_SCHEMA = [
     {
         "section": "Branding",
         "icon": "fa-solid fa-tag",
         "fields": [
-            {"key": "brand_name",    "label": "Brand Name (full)",           "type": "text",  "default": "New Horizon Coopers Limited"},
-            {"key": "brand_new",     "label": "Logo Word 1 (NEW)",           "type": "text",  "default": "NEW"},
-            {"key": "brand_horizon", "label": "Logo Word 2 (HORIZON)",       "type": "text",  "default": "HORIZON"},
-            {"key": "brand_coopers", "label": "Coopers Limited line",        "type": "text",  "default": "Coopers Limited"},
-            {"key": "brand_tagline", "label": "Tagline (below logo)",        "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
-            {"key": "logo_path",     "label": "Site Logo",                   "type": "image", "default": ""},
+            {"key": "brand_name",    "label": "Brand Name (browser tab)", "type": "text",  "default": "New Horizon Coopers Limited"},
+            {"key": "brand_new",     "label": "Logo Word 1 (dark)",       "type": "text",  "default": "NEW"},
+            {"key": "brand_horizon", "label": "Logo Word 2 (orange)",     "type": "text",  "default": "HORIZON"},
+            {"key": "brand_coopers", "label": "Coopers Limited line",     "type": "text",  "default": "Coopers Limited"},
+            {"key": "brand_tagline", "label": "Tagline (below logo)",     "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
+            {"key": "logo_path",     "label": "Admin Sidebar Logo",       "type": "image", "default": ""},
+        ],
+    },
+    {
+        "section": "Homepage — Hero Images",
+        "icon": "fa-solid fa-image",
+        "fields": [
+            {"key": "hero_image1", "label": "Hero 1 — Top Image",   "type": "image", "default": ""},
+            {"key": "hero_image2", "label": "Hero 2 — Below Image", "type": "image", "default": ""},
         ],
     },
     {
         "section": "Header",
         "icon": "fa-solid fa-bars",
         "fields": [
-            {"key": "header_cta_text",  "label": "Header Button Text",      "type": "text", "default": "Book Consultation"},
-            {"key": "header_search_ph", "label": "Search box placeholder",  "type": "text", "default": "Search properties, products, pages…"},
+            {"key": "header_cta_text",  "label": "Header Button Text",     "type": "text", "default": "Book Consultation"},
+            {"key": "header_search_ph", "label": "Search box placeholder", "type": "text", "default": "Search properties, products, pages…"},
         ],
     },
     {
-        "section": "Search Drawer",
+        "section": "Search Bar Messages",
         "icon": "fa-solid fa-magnifying-glass",
         "fields": [
-            {"key": "search_hint",       "label": "Hint text (empty state)", "type": "text", "default": "Start typing to search pages, projects, and products."},
-            {"key": "search_loading",    "label": "Loading message",         "type": "text", "default": "Searching…"},
-            {"key": "search_no_results", "label": "No results message",      "type": "text", "default": "No results found."},
-            {"key": "search_unavailable","label": "Unavailable message",     "type": "text", "default": "Search unavailable."},
+            {"key": "search_hint",        "label": "Hint (empty state)",  "type": "text", "default": "Start typing to search pages, projects, and products."},
+            {"key": "search_loading",     "label": "Loading message",     "type": "text", "default": "Searching…"},
+            {"key": "search_no_results",  "label": "No results message",  "type": "text", "default": "No results found."},
+            {"key": "search_unavailable", "label": "Unavailable message", "type": "text", "default": "Search unavailable."},
         ],
     },
     {
-        "section": "Hero Section",
-        "icon": "fa-solid fa-house-chimney",
-        "fields": [
-            {"key": "hero_eyebrow",  "label": "Hero Eyebrow",               "type": "text",  "default": "About New Horizon"},
-            {"key": "hero_title",    "label": "Hero Title",                 "type": "text",  "default": "New Horizon is a company which deals with"},
-            {"key": "hero_title_em", "label": "Hero Title (italic accent)", "type": "text",  "default": "Real Estate & Pharmaceutical products."},
-            {"key": "hero_subtitle", "label": "Hero Subtitle",              "type": "text",  "default": "Most trusted Agency in Ghana"},
-            {"key": "hero_image",    "label": "Hero Background Image",      "type": "image", "default": ""},
-        ],
-    },
-    {
-        "section": "Estates Section",
+        "section": "Real Estates Section (homepage)",
         "icon": "fa-solid fa-house-chimney-window",
         "fields": [
-            {"key": "estates_title",    "label": "Estates Title (dark part)",   "type": "text", "default": "NEW HORIZON"},
-            {"key": "estates_title_em", "label": "Estates Title (italic part)", "type": "text", "default": "REAL ESTATES"},
-            {"key": "estates_sub",      "label": "Estates Subtext",             "type": "text", "default": "We have the following"},
-            {"key": "estates_cta",      "label": "See-all button text",         "type": "text", "default": "See all properties"},
+            {"key": "estates_title",    "label": "Title — dark part",   "type": "text", "default": "NEW HORIZON"},
+            {"key": "estates_title_em", "label": "Title — italic part", "type": "text", "default": "REAL ESTATES"},
+            {"key": "estates_sub",      "label": "Subtext",             "type": "text", "default": "We have the following"},
+            {"key": "estates_cta",      "label": "See-all button text", "type": "text", "default": "See all properties"},
         ],
     },
     {
-        "section": "Pharma Section",
-        "icon": "fa-solid fa-prescription-bottle-medical",
-        "fields": [
-            {"key": "pharma_title",    "label": "Pharma Title (dark part)",   "type": "text", "default": "NEW HORIZON"},
-            {"key": "pharma_title_em", "label": "Pharma Title (italic part)", "type": "text", "default": "PHARMACEUTICALS"},
-            {"key": "pharma_sub",      "label": "Pharma Subtext",             "type": "text", "default": "We stock the following"},
-            {"key": "pharma_cta",      "label": "Pharma button text",         "type": "text", "default": "Request full catalogue"},
-        ],
-    },
-    {
-        "section": "CTA Band",
+        "section": "CTA Band (bottom of homepage)",
         "icon": "fa-solid fa-bullhorn",
         "fields": [
-            {"key": "cta_eyebrow",       "label": "CTA Eyebrow",             "type": "text", "default": "Let's talk"},
-            {"key": "cta_title",         "label": "CTA Title (line 1)",      "type": "text", "default": "Ready to find your"},
-            {"key": "cta_title_em",      "label": "CTA Title (italic line)", "type": "text", "default": "next address?"},
-            {"key": "cta_sub",           "label": "CTA Subtext",             "type": "text", "default": "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away."},
-            {"key": "cta_btn_primary",   "label": "Primary button text",     "type": "text", "default": "Book a consultation"},
-            {"key": "cta_btn_secondary", "label": "Secondary button text",   "type": "text", "default": "Contact us"},
+            {"key": "cta_eyebrow",       "label": "Eyebrow",               "type": "text", "default": "Let's talk"},
+            {"key": "cta_title",         "label": "Title — line 1",        "type": "text", "default": "Ready to find your"},
+            {"key": "cta_title_em",      "label": "Title — italic line",   "type": "text", "default": "next address?"},
+            {"key": "cta_sub",           "label": "Subtext",               "type": "text", "default": "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away."},
+            {"key": "cta_btn_primary",   "label": "Primary button text",   "type": "text", "default": "Book a consultation"},
+            {"key": "cta_btn_secondary", "label": "Secondary button text", "type": "text", "default": "Contact us"},
         ],
     },
     {
-        "section": "Contact & Location",
+        "section": "Contact Info (footer + contact page)",
         "icon": "fa-solid fa-address-book",
         "fields": [
             {"key": "contact_email",         "label": "Email Address",              "type": "text", "default": EMAIL_ADDRESS},
             {"key": "contact_phone_display", "label": "Phone (displayed)",          "type": "text", "default": PHONE_DISPLAY},
             {"key": "contact_whatsapp_num",  "label": "WhatsApp (no +, no spaces)", "type": "text", "default": WHATSAPP_NUMBER},
-            {"key": "contact_heading",       "label": "Contact Section Heading",    "type": "text", "default": "Contact Us"},
-            {"key": "contact_subheading",    "label": "Contact Section Subheading", "type": "text", "default": "We're here to help — reach out anytime."},
-            {"key": "location_heading",      "label": "Location Heading",           "type": "text", "default": "Our Location"},
-            {"key": "location_address",      "label": "Location Address",           "type": "text", "default": ADDRESS},
-            {"key": "location_maps_url",     "label": "Google Maps Link",           "type": "text", "default": "https://www.google.com/maps/search/?api=1&query=Tema+Community+25+Ghana"},
+            {"key": "location_address",      "label": "Office Address",             "type": "text", "default": ADDRESS},
         ],
     },
     {
         "section": "Footer",
         "icon": "fa-solid fa-shoe-prints",
         "fields": [
-            {"key": "footer_blurb",          "label": "Footer Blurb",                   "type": "textarea",
+            {"key": "footer_blurb", "label": "Blurb (under logo)", "type": "textarea",
              "default": "New Horizon Coopers Limited — building sustainable, modern communities across Ghana since 2017."},
-            {"key": "footer_col_company",    "label": "Column 1 heading",               "type": "text", "default": "Company"},
-            {"key": "footer_link_about",     "label": "Column 1 · Link 1",              "type": "text", "default": "About"},
-            {"key": "footer_link_projects",  "label": "Column 1 · Link 2",              "type": "text", "default": "Projects"},
-            {"key": "footer_link_gallery",   "label": "Column 1 · Link 3",              "type": "text", "default": "Gallery"},
-            {"key": "footer_link_contact",   "label": "Column 1 · Link 4",              "type": "text", "default": "Contact"},
-            {"key": "footer_col_divisions",  "label": "Column 2 heading",               "type": "text", "default": "Divisions"},
-            {"key": "footer_link_realestate","label": "Column 2 · Link 1",              "type": "text", "default": "Real Estate"},
-            {"key": "footer_link_pharma",    "label": "Column 2 · Link 2",              "type": "text", "default": "Pharmaceuticals"},
-            {"key": "footer_col_contact",    "label": "Column 3 heading",               "type": "text", "default": "Contact"},
-            {"key": "footer_copyright",      "label": "Bottom bar — copyright",         "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
+            {"key": "footer_col_company",   "label": "Col 1 — heading", "type": "text", "default": "Company"},
+            {"key": "footer_link_about",    "label": "Col 1 — Link 1",  "type": "text", "default": "About"},
+            {"key": "footer_link_projects", "label": "Col 1 — Link 2",  "type": "text", "default": "Projects"},
+            {"key": "footer_link_gallery",  "label": "Col 1 — Link 3",  "type": "text", "default": "Gallery"},
+            {"key": "footer_link_contact",  "label": "Col 1 — Link 4",  "type": "text", "default": "Contact"},
+            {"key": "footer_col_divisions",   "label": "Col 2 — heading", "type": "text", "default": "Divisions"},
+            {"key": "footer_link_realestate", "label": "Col 2 — Link 1",  "type": "text", "default": "Real Estate"},
+            {"key": "footer_link_pharma",     "label": "Col 2 — Link 2",  "type": "text", "default": "Pharmaceuticals"},
+            {"key": "footer_col_contact", "label": "Col 3 — heading", "type": "text", "default": "Contact"},
+            {"key": "footer_copyright", "label": "Bottom bar — copyright", "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
         ],
     },
 ]
@@ -173,7 +166,7 @@ def get_schema_defaults():
 
 
 # ============================================================
-# INIT — seed Supabase tables
+# SEED
 # ============================================================
 def seed_if_empty(table, rows):
     try:
@@ -187,7 +180,7 @@ def seed_if_empty(table, rows):
 
 
 def init_db():
-    # site_content
+    # Site content
     try:
         res = supabase.table("nh_site_content").select("key").limit(1).execute()
         if not res.data:
@@ -199,17 +192,16 @@ def init_db():
     except Exception as e:
         print("seed site_content error:", e)
 
-    # nav links
+    # Nav links
     seed_if_empty("nh_nav_links", [
-        {"label": "Home",            "url": "/",         "sort_order": 1, "is_locked": True,  "visible": True},
-        {"label": "About Us",        "url": "/about",    "sort_order": 2, "is_locked": False, "visible": True},
-        {"label": "Housing",         "url": "/projects", "sort_order": 3, "is_locked": False, "visible": True},
-        {"label": "Pharmaceuticals", "url": "/drugs",    "sort_order": 4, "is_locked": False, "visible": True},
-        {"label": "Gallery",         "url": "/gallery",  "sort_order": 5, "is_locked": False, "visible": True},
-        {"label": "Contact Us",      "url": "/contact",  "sort_order": 6, "is_locked": False, "visible": True},
+        {"label": "Home",       "url": "/",         "sort_order": 1, "is_locked": True,  "visible": True},
+        {"label": "About Us",   "url": "/about",    "sort_order": 2, "is_locked": False, "visible": True},
+        {"label": "Housing",    "url": "/projects", "sort_order": 3, "is_locked": False, "visible": True},
+        {"label": "Gallery",    "url": "/gallery",  "sort_order": 4, "is_locked": False, "visible": True},
+        {"label": "Contact Us", "url": "/contact",  "sort_order": 5, "is_locked": False, "visible": True},
     ])
 
-    # property types
+    # Property types
     seed_if_empty("nh_property_types", [
         {"label": "Villa",     "sort_order": 1, "is_active": True},
         {"label": "Townhouse", "sort_order": 2, "is_active": True},
@@ -217,19 +209,7 @@ def init_db():
         {"label": "Warehouse", "sort_order": 4, "is_active": True},
     ])
 
-    # 8 pharma categories
-    seed_if_empty("nh_drug_types", [
-        {"label": "Prescription Medications",       "sort_order": 1, "is_active": True},
-        {"label": "Over-the-Counter Products",      "sort_order": 2, "is_active": True},
-        {"label": "Chronic Diseases Medications",   "sort_order": 3, "is_active": True},
-        {"label": "Antibiotics & Anti-Infectives",  "sort_order": 4, "is_active": True},
-        {"label": "Medical Devices & Supplies",     "sort_order": 5, "is_active": True},
-        {"label": "First Aid & Consumables",        "sort_order": 6, "is_active": True},
-        {"label": "Baby / Mother Care & Nutrition", "sort_order": 7, "is_active": True},
-        {"label": "Veterinary Products",            "sort_order": 8, "is_active": True},
-    ])
-
-    # demo projects
+    # Demo projects — only 3 are featured by default
     seed_if_empty("nh_projects", [
         {"slug":"east-legon-villas","name":"East Legon Villas","category":"residential","custom_type":"",
          "status":"ongoing","currency":"USD","short_desc":"2 Bedrooms · 2 Baths · 180 sqm",
@@ -272,52 +252,7 @@ def init_db():
          "video":"","video_description":"","featured":False,"sort_order":5},
     ])
 
-    # demo drugs
-    seed_if_empty("nh_drugs", [
-        {"slug":"paracetamol-500mg","name":"Paracetamol 500mg",
-         "drug_type":"Over-the-Counter Products",
-         "price":12,"currency":"GHS",
-         "description":"Fast-acting relief for headaches, fever and mild pain. 24 tablets per pack.",
-         "image":"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80",
-         "video":"","featured":True,"sort_order":1},
-
-        {"slug":"multivitamin-complex","name":"Multivitamin Complex",
-         "drug_type":"Baby / Mother Care & Nutrition",
-         "price":85,"currency":"GHS",
-         "description":"Complete daily multivitamin with 25 essential vitamins & minerals. 30 capsules.",
-         "image":"https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80",
-         "video":"","featured":True,"sort_order":2},
-
-        {"slug":"amoxicillin-250mg","name":"Amoxicillin 250mg",
-         "drug_type":"Antibiotics & Anti-Infectives",
-         "price":38,"currency":"GHS",
-         "description":"Broad-spectrum antibiotic. Prescription required. 21 capsules.",
-         "image":"https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=800&q=80",
-         "video":"","featured":False,"sort_order":3},
-
-        {"slug":"blood-pressure-monitor","name":"Digital Blood Pressure Monitor",
-         "drug_type":"Medical Devices & Supplies",
-         "price":320,"currency":"GHS",
-         "description":"Clinically validated upper-arm BP monitor with large display and memory.",
-         "image":"https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
-         "video":"","featured":True,"sort_order":4},
-
-        {"slug":"first-aid-kit","name":"Family First Aid Kit",
-         "drug_type":"First Aid & Consumables",
-         "price":145,"currency":"GHS",
-         "description":"Complete 80-piece first aid kit for home, office, and travel.",
-         "image":"https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=800&q=80",
-         "video":"","featured":True,"sort_order":5},
-
-        {"slug":"metformin-500mg","name":"Metformin 500mg",
-         "drug_type":"Chronic Diseases Medications",
-         "price":42,"currency":"GHS",
-         "description":"Type 2 diabetes management. Prescription required. 30 tablets.",
-         "image":"https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80",
-         "video":"","featured":False,"sort_order":6},
-    ])
-
-    # video placeholder
+    # Video placeholder
     seed_if_empty("nh_videos", [
         {"title":"New Horizon Showreel",
          "description":"A glimpse into our latest developments across Ghana.",
@@ -407,10 +342,6 @@ def fetch_property_types(only_active=False):
         return []
 
 
-def fetch_custom_types():
-    return [t["label"] for t in fetch_property_types(only_active=True)]
-
-
 def ensure_property_type(label):
     label = (label or "").strip()
     if not label:
@@ -430,61 +361,8 @@ def ensure_property_type(label):
         print("ensure_property_type error:", e)
 
 
-def fetch_drug_types(only_active=False):
-    try:
-        q = supabase.table("nh_drug_types").select("*")
-        if only_active:
-            q = q.eq("is_active", True)
-        q = q.order("sort_order").order("id")
-        return q.execute().data or []
-    except Exception as e:
-        print("fetch_drug_types error:", e)
-        return []
-
-
-def fetch_active_drug_type_labels():
-    return [t["label"] for t in fetch_drug_types(only_active=True)]
-
-
-def ensure_drug_type(label):
-    label = (label or "").strip()
-    if not label:
-        return
-    try:
-        res = (supabase.table("nh_drug_types")
-               .select("id").ilike("label", label).limit(1).execute())
-        if res.data:
-            return
-        max_res = supabase.table("nh_drug_types").select("sort_order") \
-                    .order("sort_order", desc=True).limit(1).execute()
-        next_order = (max_res.data[0]["sort_order"] + 1) if max_res.data else 1
-        supabase.table("nh_drug_types").insert({
-            "label": label, "sort_order": next_order, "is_active": True,
-        }).execute()
-    except Exception as e:
-        print("ensure_drug_type error:", e)
-
-
-def fetch_drugs(drug_type=None, featured_only=False):
-    try:
-        q = supabase.table("nh_drugs").select("*")
-        if drug_type:
-            q = q.ilike("drug_type", drug_type)
-        if featured_only:
-            q = q.eq("featured", True)
-        q = q.order("sort_order").order("id")
-        return q.execute().data or []
-    except Exception as e:
-        print("fetch_drugs error:", e)
-        return []
-
-
-def fetch_drug(drug_id):
-    try:
-        res = supabase.table("nh_drugs").select("*").eq("id", drug_id).single().execute()
-        return res.data
-    except Exception:
-        return None
+def fetch_custom_types():
+    return [t["label"] for t in fetch_property_types(only_active=True)]
 
 
 def fetch_videos():
@@ -645,7 +523,11 @@ def index():
     featured = [p for p in all_projects if p.get("featured")]
     others   = [p for p in all_projects if not p.get("featured")]
     carousel = (featured + others)[:8]
-    grid     = all_projects[:6]
+
+    # ⬇ Only featured projects on the homepage — capped at MAX_FEATURED_ON_HOME.
+    #   If you uncheck "Feature on main page", the project disappears from here.
+    #   If you mark 3, only 3 show. If you mark 10, only the top 6 (by sort_order) show.
+    grid = featured[:MAX_FEATURED_ON_HOME]
 
     return render_template(
         "index.html",
@@ -653,8 +535,6 @@ def index():
         grid_projects=grid,
         featured_video=fetch_featured_video(),
         custom_types=fetch_custom_types(),
-        drugs=fetch_drugs()[:8],
-        drug_types=fetch_active_drug_type_labels(),
     )
 
 
@@ -728,22 +608,6 @@ def commercial():
         page_heading=None,
         page_sub=None,
         custom_types=fetch_custom_types(),
-    )
-
-
-@app.route("/drugs")
-def drugs_page():
-    drug_type = (request.args.get("type") or "").strip()
-    if drug_type:
-        drugs = fetch_drugs(drug_type=drug_type)
-    else:
-        drugs = fetch_drugs()
-
-    return render_template(
-        "drugs.html",
-        drugs=drugs,
-        drug_types=fetch_active_drug_type_labels(),
-        active_type=drug_type or None,
     )
 
 
@@ -843,15 +707,6 @@ def api_search():
                             "url": url_for("project_detail", slug=p["slug"]),
                             "icon": "fa-solid fa-building"})
 
-    for d in fetch_drugs():
-        price_str = f"{d.get('price', 0):,}"
-        if _matches(q, d["name"], d.get("drug_type",""), d.get("description",""),
-                    price_str, str(d.get("price",""))):
-            results.append({"type": "drug", "title": d["name"],
-                            "subtitle": f"{d.get('drug_type','')} · {price_str}",
-                            "url": url_for("drugs_page"),
-                            "icon": "fa-solid fa-prescription-bottle-medical"})
-
     for v in fetch_videos():
         if _matches(q, v["title"], v.get("description","")):
             results.append({"type": "video", "title": v["title"],
@@ -869,13 +724,13 @@ def api_search():
 
 
 # ============================================================
-# ADMIN — AUTH
+# ADMIN — AUTH  (accepts BOTH passwords)
 # ============================================================
 @app.route("/update/login", methods=["GET", "POST"])
 def update_login():
     if request.method == "POST":
         pwd = request.form.get("password", "")
-        if pwd == ADMIN_PASSWORD:
+        if pwd in ADMIN_PASSWORDS:
             session["admin_logged_in"] = True
             session.permanent = True
             return redirect(url_for("update_dashboard"))
@@ -902,14 +757,12 @@ def update_dashboard():
         except Exception:
             return 0
     stats = {
-        "projects":   count("nh_projects"),
-        "drugs":      count("nh_drugs"),
-        "videos":     count("nh_videos"),
-        "gallery":    count("nh_gallery_images"),
-        "inquiries":  count("nh_inquiries"),
-        "nav":        count("nh_nav_links"),
-        "types":      count("nh_property_types"),
-        "drug_types": count("nh_drug_types"),
+        "projects":  count("nh_projects"),
+        "videos":    count("nh_videos"),
+        "gallery":   count("nh_gallery_images"),
+        "inquiries": count("nh_inquiries"),
+        "nav":       count("nh_nav_links"),
+        "types":     count("nh_property_types"),
     }
     return render_template("update/dashboard.html", stats=stats)
 
@@ -1017,72 +870,6 @@ def update_property_type_delete(tid):
     except Exception as e:
         flash(f"Error: {e}", "error")
     return redirect(url_for("update_property_types"))
-
-
-# ============================================================
-# ADMIN — DRUG TYPES
-# ============================================================
-@app.route("/update/drug-types")
-@login_required
-def update_drug_types():
-    return render_template("update/drug_types.html", types=fetch_drug_types())
-
-
-@app.route("/update/drug-types/new", methods=["POST"])
-@login_required
-def update_drug_type_new():
-    label = (request.form.get("label") or "").strip()
-    order = request.form.get("sort_order", 99, type=int)
-    if not label:
-        flash("Type name is required.", "error")
-        return redirect(url_for("update_drug_types"))
-    try:
-        res = supabase.table("nh_drug_types").select("id").ilike("label", label).limit(1).execute()
-        if res.data:
-            flash("That type already exists.", "error")
-            return redirect(url_for("update_drug_types"))
-        supabase.table("nh_drug_types").insert({
-            "label": label, "sort_order": order, "is_active": True,
-        }).execute()
-        flash("Type added.", "success")
-    except Exception as e:
-        flash(f"Error: {e}", "error")
-    return redirect(url_for("update_drug_types"))
-
-
-@app.route("/update/drug-types/edit/<int:tid>", methods=["POST"])
-@login_required
-def update_drug_type_edit(tid):
-    label  = (request.form.get("label") or "").strip()
-    order  = request.form.get("sort_order", 99, type=int)
-    active = request.form.get("is_active") == "on"
-    if not label:
-        flash("Type name is required.", "error")
-        return redirect(url_for("update_drug_types"))
-    try:
-        old = supabase.table("nh_drug_types").select("label").eq("id", tid).single().execute()
-        old_label = (old.data or {}).get("label", "")
-        supabase.table("nh_drug_types").update({
-            "label": label, "sort_order": order, "is_active": active,
-        }).eq("id", tid).execute()
-        if old_label and old_label != label:
-            supabase.table("nh_drugs").update({"drug_type": label}) \
-                .ilike("drug_type", old_label).execute()
-        flash("Type updated.", "success")
-    except Exception as e:
-        flash(f"Error: {e}", "error")
-    return redirect(url_for("update_drug_types"))
-
-
-@app.route("/update/drug-types/delete/<int:tid>", methods=["POST"])
-@login_required
-def update_drug_type_delete(tid):
-    try:
-        supabase.table("nh_drug_types").delete().eq("id", tid).execute()
-        flash("Type deleted.", "success")
-    except Exception as e:
-        flash(f"Error: {e}", "error")
-    return redirect(url_for("update_drug_types"))
 
 
 # ============================================================
@@ -1209,7 +996,6 @@ def _save_project(project):
 @login_required
 def update_project_delete(pid):
     try:
-        # Delete all gallery images for this project
         for img in fetch_project_images(pid):
             delete_from_bucket(img.get("image_url"), BUCKET_IMAGES)
         supabase.table("nh_project_images").delete().eq("project_id", pid).execute()
@@ -1247,7 +1033,7 @@ def update_project_gallery_add(pid):
 
     url = save_image(file, BUCKET_IMAGES)
     if not url:
-        flash("Invalid image or exceeds 5MB limit.", "error")
+        flash("Invalid image or exceeds size limit.", "error")
         return redirect(url_for("update_project_edit", pid=pid))
 
     try:
@@ -1280,97 +1066,6 @@ def update_project_gallery_delete(img_id):
         print("gallery delete error:", e)
         flash(f"Error: {e}", "error")
     return redirect(url_for("update_projects"))
-
-
-# ============================================================
-# ADMIN — DRUGS
-# ============================================================
-@app.route("/update/drugs")
-@login_required
-def update_drugs():
-    return render_template("update/drugs.html", drugs=fetch_drugs())
-
-
-@app.route("/update/drugs/new", methods=["GET", "POST"])
-@login_required
-def update_drug_new():
-    if request.method == "POST":
-        return _save_drug(None)
-    return render_template("update/drug_form.html", drug=None,
-                           drug_types=fetch_drug_types(only_active=True))
-
-
-@app.route("/update/drugs/edit/<int:did>", methods=["GET", "POST"])
-@login_required
-def update_drug_edit(did):
-    drug = fetch_drug(did)
-    if not drug:
-        abort(404)
-    if request.method == "POST":
-        return _save_drug(drug)
-    return render_template("update/drug_form.html", drug=drug,
-                           drug_types=fetch_drug_types(only_active=True))
-
-
-def _save_drug(drug):
-    name        = (request.form.get("name") or "").strip()
-    slug        = (request.form.get("slug") or "").strip().lower().replace(" ", "-")
-    drug_type   = (request.form.get("drug_type") or "").strip()
-    currency    = (request.form.get("currency") or "GHS").strip()
-    description = (request.form.get("description") or "").strip()
-    try:
-        price = int(float(request.form.get("price", 0) or 0))
-    except (ValueError, TypeError):
-        price = 0
-    featured = request.form.get("featured") == "on"
-
-    image_uploaded = None
-    if "image_file" in request.files and request.files["image_file"].filename:
-        image_uploaded = save_image(request.files["image_file"], BUCKET_IMAGES)
-
-    video_uploaded = None
-    if "video_file" in request.files and request.files["video_file"].filename:
-        video_uploaded = save_video(request.files["video_file"])
-
-    image = image_uploaded or request.form.get("image_url","").strip() or \
-            (drug["image"] if drug else "")
-    video = video_uploaded or request.form.get("video_url","").strip() or \
-            (drug.get("video") if drug else "")
-
-    payload = {
-        "name": name, "slug": slug, "drug_type": drug_type,
-        "price": price, "currency": currency,
-        "description": description,
-        "image": image, "video": video,
-        "featured": featured,
-    }
-
-    try:
-        if drug:
-            supabase.table("nh_drugs").update(payload).eq("id", drug["id"]).execute()
-            flash("Product updated.", "success")
-        else:
-            payload["sort_order"] = 99
-            supabase.table("nh_drugs").insert(payload).execute()
-            flash("Product created.", "success")
-
-        if drug_type:
-            ensure_drug_type(drug_type)
-    except Exception as e:
-        print("save drug error:", e)
-        flash(f"Error: {e}", "error")
-    return redirect(url_for("update_drugs"))
-
-
-@app.route("/update/drugs/delete/<int:did>", methods=["POST"])
-@login_required
-def update_drug_delete(did):
-    try:
-        supabase.table("nh_drugs").delete().eq("id", did).execute()
-        flash("Product deleted.", "success")
-    except Exception as e:
-        flash(f"Error: {e}", "error")
-    return redirect(url_for("update_drugs"))
 
 
 # ============================================================
@@ -1467,7 +1162,7 @@ def update_gallery_upload():
     file  = request.files.get("image")
     url   = save_image(file, BUCKET_GALLERY)
     if not url:
-        flash("Invalid image or exceeds 5MB.", "error")
+        flash("Invalid image or exceeds size limit.", "error")
         return redirect(url_for("update_gallery"))
     try:
         supabase.table("nh_gallery_images").insert({
@@ -1611,7 +1306,11 @@ def server_error(e):
 # ============================================================
 # INIT + RUN
 # ============================================================
-init_db()
+with app.app_context():
+    try:
+        init_db()
+    except Exception as e:
+        print("[INIT] skipped:", e)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
