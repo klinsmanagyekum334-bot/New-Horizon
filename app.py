@@ -1,8 +1,9 @@
 import os
 import uuid
-import sqlite3
 from functools import wraps
 from dotenv import load_dotenv
+from supabase import create_client, Client
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, flash, abort, jsonify
@@ -13,6 +14,9 @@ load_dotenv()
 # ============================================================
 # CONFIG
 # ============================================================
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://soeenrjxrspfsexdiuip.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_mYvFcs9_OSA0PTIbcj4djg_NHGB8DXC")
+
 SECRET_KEY     = os.environ.get("SECRET_KEY", "newhorizon-secret-2026-klinsman")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Klinsman@ophyser1")
 
@@ -23,115 +27,138 @@ EMAIL_ADDRESS   = "info@newhorizongh.com"
 ADDRESS         = "Tema Community 25, Ghana"
 
 MAX_VIDEOS              = 10
-MAX_VIDEO_BYTES         = 20 * 1024 * 1024      # 20 MB (global video band)
-MAX_IMAGE_BYTES         = 15 * 1024 * 1024      # 15 MB (phone photos safe)
+MAX_VIDEO_BYTES         = 20 * 1024 * 1024      # global video band
+MAX_IMAGE_BYTES         = 5  * 1024 * 1024
 MAX_PROJECT_IMAGES      = 7
-MAX_PROJECT_VIDEO_BYTES = 20 * 1024 * 1024      # 20 MB (per-project video)
+MAX_PROJECT_VIDEO_BYTES = 10 * 1024 * 1024      # per-project video
 
-# LOCAL STORAGE
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-DB_PATH    = os.path.join(BASE_DIR, "nh.db")
-UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
-UPLOAD_URL = "/static/uploads"
+BUCKET_IMAGES  = "nh-images"
+BUCKET_GALLERY = "nh-gallery"
+BUCKET_VIDEOS  = "nh-videos"
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-app.config["MAX_CONTENT_LENGTH"] = 30 * 1024 * 1024   # 30 MB request cap
+app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
+
+app.config["SESSION_COOKIE_SECURE"]   = True
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # ============================================================
-# SITE SCHEMA — only fields that render on the site
+# SITE SCHEMA — editable content
 # ============================================================
 SITE_SCHEMA = [
     {
         "section": "Branding",
         "icon": "fa-solid fa-tag",
         "fields": [
-            {"key": "brand_name",    "label": "Brand Name (browser tab)", "type": "text",  "default": "New Horizon Coopers Limited"},
-            {"key": "brand_new",     "label": "Logo Word 1 (dark)",       "type": "text",  "default": "NEW"},
-            {"key": "brand_horizon", "label": "Logo Word 2 (orange)",     "type": "text",  "default": "HORIZON"},
-            {"key": "brand_coopers", "label": "Coopers Limited line",     "type": "text",  "default": "Coopers Limited"},
-            {"key": "brand_tagline", "label": "Tagline (below logo)",     "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
-            {"key": "logo_path",     "label": "Admin Sidebar Logo",       "type": "image", "default": ""},
-        ],
-    },
-    {
-        "section": "Homepage — Hero Images",
-        "icon": "fa-solid fa-image",
-        "fields": [
-            {"key": "hero_image1", "label": "Hero 1 — Top Image",   "type": "image", "default": ""},
-            {"key": "hero_image2", "label": "Hero 2 — Below Image", "type": "image", "default": ""},
+            {"key": "brand_name",    "label": "Brand Name (full)",           "type": "text",  "default": "New Horizon Coopers Limited"},
+            {"key": "brand_new",     "label": "Logo Word 1 (NEW)",           "type": "text",  "default": "NEW"},
+            {"key": "brand_horizon", "label": "Logo Word 2 (HORIZON)",       "type": "text",  "default": "HORIZON"},
+            {"key": "brand_coopers", "label": "Coopers Limited line",        "type": "text",  "default": "Coopers Limited"},
+            {"key": "brand_tagline", "label": "Tagline (below logo)",        "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
+            {"key": "logo_path",     "label": "Site Logo",                   "type": "image", "default": ""},
         ],
     },
     {
         "section": "Header",
         "icon": "fa-solid fa-bars",
         "fields": [
-            {"key": "header_cta_text",  "label": "Header Button Text",     "type": "text", "default": "Book Consultation"},
-            {"key": "header_search_ph", "label": "Search box placeholder", "type": "text", "default": "Search properties, products, pages…"},
+            {"key": "header_cta_text",  "label": "Header Button Text",      "type": "text", "default": "Book Consultation"},
+            {"key": "header_search_ph", "label": "Search box placeholder",  "type": "text", "default": "Search properties, products, pages…"},
         ],
     },
     {
-        "section": "Search Bar Messages",
+        "section": "Search Drawer",
         "icon": "fa-solid fa-magnifying-glass",
         "fields": [
-            {"key": "search_hint",        "label": "Hint (empty state)",  "type": "text", "default": "Start typing to search pages, projects, and products."},
-            {"key": "search_loading",     "label": "Loading message",     "type": "text", "default": "Searching…"},
-            {"key": "search_no_results",  "label": "No results message",  "type": "text", "default": "No results found."},
-            {"key": "search_unavailable", "label": "Unavailable message", "type": "text", "default": "Search unavailable."},
+            {"key": "search_hint",       "label": "Hint text (empty state)", "type": "text", "default": "Start typing to search pages, projects, and products."},
+            {"key": "search_loading",    "label": "Loading message",         "type": "text", "default": "Searching…"},
+            {"key": "search_no_results", "label": "No results message",      "type": "text", "default": "No results found."},
+            {"key": "search_unavailable","label": "Unavailable message",     "type": "text", "default": "Search unavailable."},
         ],
     },
     {
-        "section": "Real Estates Section (homepage)",
+        "section": "Hero Section",
+        "icon": "fa-solid fa-house-chimney",
+        "fields": [
+            {"key": "hero_eyebrow",  "label": "Hero Eyebrow",               "type": "text",  "default": "About New Horizon"},
+            {"key": "hero_title",    "label": "Hero Title",                 "type": "text",  "default": "New Horizon is a company which deals with"},
+            {"key": "hero_title_em", "label": "Hero Title (italic accent)", "type": "text",  "default": "Real Estate & Pharmaceutical products."},
+            {"key": "hero_subtitle", "label": "Hero Subtitle",              "type": "text",  "default": "Most trusted Agency in Ghana"},
+            {"key": "hero_image",    "label": "Hero Background Image",      "type": "image", "default": ""},
+        ],
+    },
+    {
+        "section": "Estates Section",
         "icon": "fa-solid fa-house-chimney-window",
         "fields": [
-            {"key": "estates_title",    "label": "Title — dark part",   "type": "text", "default": "NEW HORIZON"},
-            {"key": "estates_title_em", "label": "Title — italic part", "type": "text", "default": "REAL ESTATES"},
-            {"key": "estates_sub",      "label": "Subtext",             "type": "text", "default": "We have the following"},
-            {"key": "estates_cta",      "label": "See-all button text", "type": "text", "default": "See all properties"},
+            {"key": "estates_title",    "label": "Estates Title (dark part)",   "type": "text", "default": "NEW HORIZON"},
+            {"key": "estates_title_em", "label": "Estates Title (italic part)", "type": "text", "default": "REAL ESTATES"},
+            {"key": "estates_sub",      "label": "Estates Subtext",             "type": "text", "default": "We have the following"},
+            {"key": "estates_cta",      "label": "See-all button text",         "type": "text", "default": "See all properties"},
         ],
     },
     {
-        "section": "CTA Band (bottom of homepage)",
+        "section": "Pharma Section",
+        "icon": "fa-solid fa-prescription-bottle-medical",
+        "fields": [
+            {"key": "pharma_title",    "label": "Pharma Title (dark part)",   "type": "text", "default": "NEW HORIZON"},
+            {"key": "pharma_title_em", "label": "Pharma Title (italic part)", "type": "text", "default": "PHARMACEUTICALS"},
+            {"key": "pharma_sub",      "label": "Pharma Subtext",             "type": "text", "default": "We stock the following"},
+            {"key": "pharma_cta",      "label": "Pharma button text",         "type": "text", "default": "Request full catalogue"},
+        ],
+    },
+    {
+        "section": "CTA Band",
         "icon": "fa-solid fa-bullhorn",
         "fields": [
-            {"key": "cta_eyebrow",       "label": "Eyebrow",               "type": "text", "default": "Let's talk"},
-            {"key": "cta_title",         "label": "Title — line 1",        "type": "text", "default": "Ready to find your"},
-            {"key": "cta_title_em",      "label": "Title — italic line",   "type": "text", "default": "next address?"},
-            {"key": "cta_sub",           "label": "Subtext",               "type": "text", "default": "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away."},
-            {"key": "cta_btn_primary",   "label": "Primary button text",   "type": "text", "default": "Book a consultation"},
-            {"key": "cta_btn_secondary", "label": "Secondary button text", "type": "text", "default": "Contact us"},
+            {"key": "cta_eyebrow",       "label": "CTA Eyebrow",             "type": "text", "default": "Let's talk"},
+            {"key": "cta_title",         "label": "CTA Title (line 1)",      "type": "text", "default": "Ready to find your"},
+            {"key": "cta_title_em",      "label": "CTA Title (italic line)", "type": "text", "default": "next address?"},
+            {"key": "cta_sub",           "label": "CTA Subtext",             "type": "text", "default": "Whether you're buying a home, supplying a pharmacy, or exploring a partnership — our team is one call away."},
+            {"key": "cta_btn_primary",   "label": "Primary button text",     "type": "text", "default": "Book a consultation"},
+            {"key": "cta_btn_secondary", "label": "Secondary button text",   "type": "text", "default": "Contact us"},
         ],
     },
     {
-        "section": "Contact Info (footer + contact page)",
+        "section": "Contact & Location",
         "icon": "fa-solid fa-address-book",
         "fields": [
             {"key": "contact_email",         "label": "Email Address",              "type": "text", "default": EMAIL_ADDRESS},
             {"key": "contact_phone_display", "label": "Phone (displayed)",          "type": "text", "default": PHONE_DISPLAY},
             {"key": "contact_whatsapp_num",  "label": "WhatsApp (no +, no spaces)", "type": "text", "default": WHATSAPP_NUMBER},
-            {"key": "location_address",      "label": "Office Address",             "type": "text", "default": ADDRESS},
+            {"key": "contact_heading",       "label": "Contact Section Heading",    "type": "text", "default": "Contact Us"},
+            {"key": "contact_subheading",    "label": "Contact Section Subheading", "type": "text", "default": "We're here to help — reach out anytime."},
+            {"key": "location_heading",      "label": "Location Heading",           "type": "text", "default": "Our Location"},
+            {"key": "location_address",      "label": "Location Address",           "type": "text", "default": ADDRESS},
+            {"key": "location_maps_url",     "label": "Google Maps Link",           "type": "text", "default": "https://www.google.com/maps/search/?api=1&query=Tema+Community+25+Ghana"},
         ],
     },
     {
         "section": "Footer",
         "icon": "fa-solid fa-shoe-prints",
         "fields": [
-            {"key": "footer_blurb", "label": "Blurb (under logo)", "type": "textarea",
+            {"key": "footer_blurb",          "label": "Footer Blurb",                   "type": "textarea",
              "default": "New Horizon Coopers Limited — building sustainable, modern communities across Ghana since 2017."},
-
-            {"key": "footer_col_company",   "label": "Col 1 — heading", "type": "text", "default": "Company"},
-            {"key": "footer_link_about",    "label": "Col 1 — Link 1",  "type": "text", "default": "About"},
-            {"key": "footer_link_projects", "label": "Col 1 — Link 2",  "type": "text", "default": "Projects"},
-            {"key": "footer_link_gallery",  "label": "Col 1 — Link 3",  "type": "text", "default": "Gallery"},
-            {"key": "footer_link_contact",  "label": "Col 1 — Link 4",  "type": "text", "default": "Contact"},
-
-            {"key": "footer_col_divisions",   "label": "Col 2 — heading", "type": "text", "default": "Divisions"},
-            {"key": "footer_link_realestate", "label": "Col 2 — Link 1",  "type": "text", "default": "Real Estate"},
-
-            {"key": "footer_col_contact", "label": "Col 3 — heading", "type": "text", "default": "Contact"},
-
-            {"key": "footer_copyright", "label": "Bottom bar — copyright", "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
+            {"key": "footer_col_company",    "label": "Column 1 heading",               "type": "text", "default": "Company"},
+            {"key": "footer_link_about",     "label": "Column 1 · Link 1",              "type": "text", "default": "About"},
+            {"key": "footer_link_projects",  "label": "Column 1 · Link 2",              "type": "text", "default": "Projects"},
+            {"key": "footer_link_gallery",   "label": "Column 1 · Link 3",              "type": "text", "default": "Gallery"},
+            {"key": "footer_link_contact",   "label": "Column 1 · Link 4",              "type": "text", "default": "Contact"},
+            {"key": "footer_col_divisions",  "label": "Column 2 heading",               "type": "text", "default": "Divisions"},
+            {"key": "footer_link_realestate","label": "Column 2 · Link 1",              "type": "text", "default": "Real Estate"},
+            {"key": "footer_link_pharma",    "label": "Column 2 · Link 2",              "type": "text", "default": "Pharmaceuticals"},
+            {"key": "footer_col_contact",    "label": "Column 3 heading",               "type": "text", "default": "Contact"},
+            {"key": "footer_copyright",      "label": "Bottom bar — copyright",         "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
         ],
     },
 ]
@@ -146,191 +173,63 @@ def get_schema_defaults():
 
 
 # ============================================================
-# SQLITE HELPERS
+# INIT — seed Supabase tables
 # ============================================================
-def _conn():
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
-
-
-def query(sql, params=(), one=False):
-    conn = _conn()
-    try:
-        cur = conn.execute(sql, params)
-        rows = cur.fetchall()
-        if one:
-            return dict(rows[0]) if rows else None
-        return [dict(r) for r in rows]
-    finally:
-        conn.close()
-
-
-def execute(sql, params=()):
-    conn = _conn()
-    try:
-        cur = conn.execute(sql, params)
-        conn.commit()
-        return cur.lastrowid
-    finally:
-        conn.close()
-
-
-def insert_row(table, data):
-    cols = ", ".join(data.keys())
-    placeholders = ", ".join(["?"] * len(data))
-    return execute(
-        f"INSERT INTO {table} ({cols}) VALUES ({placeholders})",
-        tuple(data.values()),
-    )
-
-
-def update_row(table, data, where_col, where_val):
-    set_clause = ", ".join(f"{k} = ?" for k in data.keys())
-    execute(
-        f"UPDATE {table} SET {set_clause} WHERE {where_col} = ?",
-        tuple(data.values()) + (where_val,),
-    )
-
-
-# ============================================================
-# INIT — create tables + seed
-# ============================================================
-def create_tables():
-    conn = _conn()
-    try:
-        conn.executescript("""
-        CREATE TABLE IF NOT EXISTS nh_site_content (
-            key   TEXT PRIMARY KEY,
-            value TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_nav_links (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            label       TEXT NOT NULL,
-            url         TEXT NOT NULL,
-            sort_order  INTEGER DEFAULT 99,
-            is_locked   INTEGER DEFAULT 0,
-            visible     INTEGER DEFAULT 1
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_property_types (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            label       TEXT NOT NULL,
-            sort_order  INTEGER DEFAULT 99,
-            is_active   INTEGER DEFAULT 1
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_projects (
-            id                INTEGER PRIMARY KEY AUTOINCREMENT,
-            slug              TEXT UNIQUE NOT NULL,
-            name              TEXT NOT NULL,
-            category          TEXT NOT NULL DEFAULT 'residential',
-            custom_type       TEXT,
-            status            TEXT,
-            currency          TEXT DEFAULT 'GHS',
-            short_desc        TEXT,
-            long_desc         TEXT,
-            location          TEXT,
-            units             TEXT,
-            price_from        INTEGER DEFAULT 0,
-            image             TEXT,
-            hero_image        TEXT,
-            video             TEXT,
-            video_description TEXT,
-            featured          INTEGER DEFAULT 0,
-            sort_order        INTEGER DEFAULT 99
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_project_images (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id  INTEGER NOT NULL,
-            image_url   TEXT NOT NULL,
-            description TEXT,
-            sort_order  INTEGER DEFAULT 99,
-            FOREIGN KEY (project_id) REFERENCES nh_projects(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_videos (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            title        TEXT NOT NULL,
-            description  TEXT,
-            filename     TEXT,
-            is_featured  INTEGER DEFAULT 0,
-            sort_order   INTEGER DEFAULT 99
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_gallery_images (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            title       TEXT,
-            filename    TEXT NOT NULL,
-            source      TEXT DEFAULT 'upload',
-            sort_order  INTEGER DEFAULT 99
-        );
-
-        CREATE TABLE IF NOT EXISTS nh_inquiries (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            kind            TEXT NOT NULL,
-            name            TEXT NOT NULL,
-            email           TEXT,
-            phone           TEXT,
-            subject         TEXT,
-            message         TEXT,
-            preferred_date  TEXT,
-            created_at      TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-        """)
-        conn.commit()
-    finally:
-        conn.close()
-
-
 def seed_if_empty(table, rows):
     try:
-        existing = query(f"SELECT id FROM {table} LIMIT 1")
-        if existing:
+        res = supabase.table(table).select("id").limit(1).execute()
+        if res.data:
             return
-        for row in rows:
-            insert_row(table, row)
+        supabase.table(table).insert(rows).execute()
         print(f"[INIT] Seeded {table} with {len(rows)} rows")
     except Exception as e:
         print(f"seed {table} error:", e)
 
 
 def init_db():
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    create_tables()
-
-    # Seed site_content
+    # site_content
     try:
-        defaults = get_schema_defaults()
-        for k, v in defaults.items():
-            execute(
-                "INSERT OR IGNORE INTO nh_site_content (key, value) VALUES (?, ?)",
-                (k, v),
-            )
+        res = supabase.table("nh_site_content").select("key").limit(1).execute()
+        if not res.data:
+            defaults = get_schema_defaults()
+            supabase.table("nh_site_content").insert(
+                [{"key": k, "value": v} for k, v in defaults.items()]
+            ).execute()
+            print("[INIT] Seeded nh_site_content")
     except Exception as e:
         print("seed site_content error:", e)
 
-    # Nav links
+    # nav links
     seed_if_empty("nh_nav_links", [
-        {"label": "Home",       "url": "/",         "sort_order": 1, "is_locked": 1, "visible": 1},
-        {"label": "About Us",   "url": "/about",    "sort_order": 2, "is_locked": 0, "visible": 1},
-        {"label": "Housing",    "url": "/projects", "sort_order": 3, "is_locked": 0, "visible": 1},
-        {"label": "Gallery",    "url": "/gallery",  "sort_order": 4, "is_locked": 0, "visible": 1},
-        {"label": "Contact Us", "url": "/contact",  "sort_order": 5, "is_locked": 0, "visible": 1},
+        {"label": "Home",            "url": "/",         "sort_order": 1, "is_locked": True,  "visible": True},
+        {"label": "About Us",        "url": "/about",    "sort_order": 2, "is_locked": False, "visible": True},
+        {"label": "Housing",         "url": "/projects", "sort_order": 3, "is_locked": False, "visible": True},
+        {"label": "Pharmaceuticals", "url": "/drugs",    "sort_order": 4, "is_locked": False, "visible": True},
+        {"label": "Gallery",         "url": "/gallery",  "sort_order": 5, "is_locked": False, "visible": True},
+        {"label": "Contact Us",      "url": "/contact",  "sort_order": 6, "is_locked": False, "visible": True},
     ])
 
-    # Property types
+    # property types
     seed_if_empty("nh_property_types", [
-        {"label": "Villa",     "sort_order": 1, "is_active": 1},
-        {"label": "Townhouse", "sort_order": 2, "is_active": 1},
-        {"label": "Apartment", "sort_order": 3, "is_active": 1},
-        {"label": "Warehouse", "sort_order": 4, "is_active": 1},
+        {"label": "Villa",     "sort_order": 1, "is_active": True},
+        {"label": "Townhouse", "sort_order": 2, "is_active": True},
+        {"label": "Apartment", "sort_order": 3, "is_active": True},
+        {"label": "Warehouse", "sort_order": 4, "is_active": True},
     ])
 
-    # Demo projects
+    # 8 pharma categories
+    seed_if_empty("nh_drug_types", [
+        {"label": "Prescription Medications",       "sort_order": 1, "is_active": True},
+        {"label": "Over-the-Counter Products",      "sort_order": 2, "is_active": True},
+        {"label": "Chronic Diseases Medications",   "sort_order": 3, "is_active": True},
+        {"label": "Antibiotics & Anti-Infectives",  "sort_order": 4, "is_active": True},
+        {"label": "Medical Devices & Supplies",     "sort_order": 5, "is_active": True},
+        {"label": "First Aid & Consumables",        "sort_order": 6, "is_active": True},
+        {"label": "Baby / Mother Care & Nutrition", "sort_order": 7, "is_active": True},
+        {"label": "Veterinary Products",            "sort_order": 8, "is_active": True},
+    ])
+
+    # demo projects
     seed_if_empty("nh_projects", [
         {"slug":"east-legon-villas","name":"East Legon Villas","category":"residential","custom_type":"",
          "status":"ongoing","currency":"USD","short_desc":"2 Bedrooms · 2 Baths · 180 sqm",
@@ -338,7 +237,7 @@ def init_db():
          "location":"East Legon, Accra","units":"48 Villas","price_from":420000,
          "image":"https://picsum.photos/seed/eastlegon/600/400",
          "hero_image":"https://picsum.photos/seed/eastlegon/1600/900",
-         "video":"","video_description":"","featured":1,"sort_order":1},
+         "video":"","video_description":"","featured":True,"sort_order":1},
 
         {"slug":"tema-eco-townhomes","name":"Tema Eco Townhomes","category":"residential","custom_type":"",
          "status":"fully-complete","currency":"USD","short_desc":"3 Bedrooms · 2 Baths · 220 sqm",
@@ -346,7 +245,7 @@ def init_db():
          "location":"Tema, Greater Accra","units":"32 Townhomes","price_from":385000,
          "image":"https://picsum.photos/seed/temaeco/600/400",
          "hero_image":"https://picsum.photos/seed/temaeco/1600/900",
-         "video":"","video_description":"","featured":1,"sort_order":2},
+         "video":"","video_description":"","featured":True,"sort_order":2},
 
         {"slug":"airport-city-lofts","name":"Airport City Lofts","category":"commercial","custom_type":"",
          "status":"partially-complete","currency":"USD","short_desc":"Modern commercial space · 120 sqm",
@@ -354,7 +253,7 @@ def init_db():
          "location":"Airport City, Accra","units":"12 Units","price_from":220000,
          "image":"https://picsum.photos/seed/airportcity/600/400",
          "hero_image":"https://picsum.photos/seed/airportcity/1600/900",
-         "video":"","video_description":"","featured":1,"sort_order":3},
+         "video":"","video_description":"","featured":True,"sort_order":3},
 
         {"slug":"kumasi-garden-estate","name":"Kumasi Garden Estate","category":"residential","custom_type":"",
          "status":"ongoing","currency":"GHS","short_desc":"4 Bedrooms · 3 Baths · 320 sqm",
@@ -362,7 +261,7 @@ def init_db():
          "location":"Asokwa, Kumasi","units":"60 Homes","price_from":310000,
          "image":"https://picsum.photos/seed/kumasigarden/600/400",
          "hero_image":"https://picsum.photos/seed/kumasigarden/1600/900",
-         "video":"","video_description":"","featured":0,"sort_order":4},
+         "video":"","video_description":"","featured":False,"sort_order":4},
 
         {"slug":"takoradi-business-park","name":"Takoradi Business Park","category":"commercial","custom_type":"",
          "status":"about-to-start","currency":"GHS","short_desc":"Office & retail space · 90 sqm",
@@ -370,14 +269,59 @@ def init_db():
          "location":"Takoradi, Western Region","units":"24 Units","price_from":195000,
          "image":"https://picsum.photos/seed/takoradipark/600/400",
          "hero_image":"https://picsum.photos/seed/takoradipark/1600/900",
-         "video":"","video_description":"","featured":0,"sort_order":5},
+         "video":"","video_description":"","featured":False,"sort_order":5},
     ])
 
-    # Video placeholder
+    # demo drugs
+    seed_if_empty("nh_drugs", [
+        {"slug":"paracetamol-500mg","name":"Paracetamol 500mg",
+         "drug_type":"Over-the-Counter Products",
+         "price":12,"currency":"GHS",
+         "description":"Fast-acting relief for headaches, fever and mild pain. 24 tablets per pack.",
+         "image":"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=800&q=80",
+         "video":"","featured":True,"sort_order":1},
+
+        {"slug":"multivitamin-complex","name":"Multivitamin Complex",
+         "drug_type":"Baby / Mother Care & Nutrition",
+         "price":85,"currency":"GHS",
+         "description":"Complete daily multivitamin with 25 essential vitamins & minerals. 30 capsules.",
+         "image":"https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80",
+         "video":"","featured":True,"sort_order":2},
+
+        {"slug":"amoxicillin-250mg","name":"Amoxicillin 250mg",
+         "drug_type":"Antibiotics & Anti-Infectives",
+         "price":38,"currency":"GHS",
+         "description":"Broad-spectrum antibiotic. Prescription required. 21 capsules.",
+         "image":"https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=800&q=80",
+         "video":"","featured":False,"sort_order":3},
+
+        {"slug":"blood-pressure-monitor","name":"Digital Blood Pressure Monitor",
+         "drug_type":"Medical Devices & Supplies",
+         "price":320,"currency":"GHS",
+         "description":"Clinically validated upper-arm BP monitor with large display and memory.",
+         "image":"https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
+         "video":"","featured":True,"sort_order":4},
+
+        {"slug":"first-aid-kit","name":"Family First Aid Kit",
+         "drug_type":"First Aid & Consumables",
+         "price":145,"currency":"GHS",
+         "description":"Complete 80-piece first aid kit for home, office, and travel.",
+         "image":"https://images.unsplash.com/photo-1603398938378-e54eab446dde?auto=format&fit=crop&w=800&q=80",
+         "video":"","featured":True,"sort_order":5},
+
+        {"slug":"metformin-500mg","name":"Metformin 500mg",
+         "drug_type":"Chronic Diseases Medications",
+         "price":42,"currency":"GHS",
+         "description":"Type 2 diabetes management. Prescription required. 30 tablets.",
+         "image":"https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80",
+         "video":"","featured":False,"sort_order":6},
+    ])
+
+    # video placeholder
     seed_if_empty("nh_videos", [
         {"title":"New Horizon Showreel",
          "description":"A glimpse into our latest developments across Ghana.",
-         "filename":"", "is_featured": 1, "sort_order": 1}
+         "filename":"", "is_featured": True, "sort_order": 1}
     ])
 
 
@@ -396,8 +340,8 @@ def login_required(f):
 def fetch_site():
     defaults = get_schema_defaults()
     try:
-        rows = query("SELECT key, value FROM nh_site_content")
-        for row in rows:
+        res = supabase.table("nh_site_content").select("key, value").execute()
+        for row in (res.data or []):
             defaults[row["key"]] = row["value"]
     except Exception as e:
         print("fetch_site error:", e)
@@ -406,10 +350,10 @@ def fetch_site():
 
 def fetch_nav():
     try:
-        return query(
-            "SELECT * FROM nh_nav_links WHERE visible = 1 "
-            "ORDER BY sort_order ASC, id ASC"
-        )
+        res = (supabase.table("nh_nav_links")
+               .select("*").eq("visible", True)
+               .order("sort_order").order("id").execute())
+        return res.data or []
     except Exception as e:
         print("fetch_nav error:", e)
         return []
@@ -417,18 +361,16 @@ def fetch_nav():
 
 def fetch_projects(category=None, featured_only=False, custom_type=None):
     try:
-        sql = "SELECT * FROM nh_projects WHERE 1=1"
-        params = []
+        q = supabase.table("nh_projects").select("*")
         if category:
-            sql += " AND category = ?"
-            params.append(category)
+            q = q.eq("category", category)
         if custom_type:
-            sql += " AND LOWER(custom_type) = LOWER(?)"
-            params.append(custom_type)
+            q = q.eq("custom_type", custom_type)
         if featured_only:
-            sql += " AND featured = 1"
-        sql += " ORDER BY sort_order ASC, id ASC"
-        return query(sql, tuple(params))
+            q = q.eq("featured", True)
+        q = q.order("sort_order").order("id")
+        res = q.execute()
+        return res.data or []
     except Exception as e:
         print("fetch_projects error:", e)
         return []
@@ -436,18 +378,18 @@ def fetch_projects(category=None, featured_only=False, custom_type=None):
 
 def fetch_project(slug):
     try:
-        return query("SELECT * FROM nh_projects WHERE slug = ? LIMIT 1",
-                     (slug,), one=True)
+        res = supabase.table("nh_projects").select("*").eq("slug", slug).single().execute()
+        return res.data
     except Exception:
         return None
 
 
 def fetch_project_images(project_id):
     try:
-        return query(
-            "SELECT * FROM nh_project_images WHERE project_id = ? "
-            "ORDER BY sort_order ASC, id ASC", (project_id,)
-        )
+        res = (supabase.table("nh_project_images")
+               .select("*").eq("project_id", project_id)
+               .order("sort_order").order("id").execute())
+        return res.data or []
     except Exception as e:
         print("fetch_project_images error:", e)
         return []
@@ -455,14 +397,18 @@ def fetch_project_images(project_id):
 
 def fetch_property_types(only_active=False):
     try:
-        sql = "SELECT * FROM nh_property_types"
+        q = supabase.table("nh_property_types").select("*")
         if only_active:
-            sql += " WHERE is_active = 1"
-        sql += " ORDER BY sort_order ASC, id ASC"
-        return query(sql)
+            q = q.eq("is_active", True)
+        q = q.order("sort_order").order("id")
+        return q.execute().data or []
     except Exception as e:
         print("fetch_property_types error:", e)
         return []
+
+
+def fetch_custom_types():
+    return [t["label"] for t in fetch_property_types(only_active=True)]
 
 
 def ensure_property_type(label):
@@ -470,28 +416,81 @@ def ensure_property_type(label):
     if not label:
         return
     try:
-        existing = query(
-            "SELECT id FROM nh_property_types WHERE LOWER(label) = LOWER(?) LIMIT 1",
-            (label,), one=True
-        )
-        if existing:
+        res = (supabase.table("nh_property_types")
+               .select("id").ilike("label", label).limit(1).execute())
+        if res.data:
             return
-        row = query("SELECT MAX(sort_order) AS m FROM nh_property_types", one=True)
-        next_order = (row["m"] or 0) + 1 if row else 1
-        insert_row("nh_property_types", {
-            "label": label, "sort_order": next_order, "is_active": 1,
-        })
+        max_res = supabase.table("nh_property_types").select("sort_order") \
+                    .order("sort_order", desc=True).limit(1).execute()
+        next_order = (max_res.data[0]["sort_order"] + 1) if max_res.data else 1
+        supabase.table("nh_property_types").insert({
+            "label": label, "sort_order": next_order, "is_active": True,
+        }).execute()
     except Exception as e:
         print("ensure_property_type error:", e)
 
 
-def fetch_custom_types():
-    return [t["label"] for t in fetch_property_types(only_active=True)]
+def fetch_drug_types(only_active=False):
+    try:
+        q = supabase.table("nh_drug_types").select("*")
+        if only_active:
+            q = q.eq("is_active", True)
+        q = q.order("sort_order").order("id")
+        return q.execute().data or []
+    except Exception as e:
+        print("fetch_drug_types error:", e)
+        return []
+
+
+def fetch_active_drug_type_labels():
+    return [t["label"] for t in fetch_drug_types(only_active=True)]
+
+
+def ensure_drug_type(label):
+    label = (label or "").strip()
+    if not label:
+        return
+    try:
+        res = (supabase.table("nh_drug_types")
+               .select("id").ilike("label", label).limit(1).execute())
+        if res.data:
+            return
+        max_res = supabase.table("nh_drug_types").select("sort_order") \
+                    .order("sort_order", desc=True).limit(1).execute()
+        next_order = (max_res.data[0]["sort_order"] + 1) if max_res.data else 1
+        supabase.table("nh_drug_types").insert({
+            "label": label, "sort_order": next_order, "is_active": True,
+        }).execute()
+    except Exception as e:
+        print("ensure_drug_type error:", e)
+
+
+def fetch_drugs(drug_type=None, featured_only=False):
+    try:
+        q = supabase.table("nh_drugs").select("*")
+        if drug_type:
+            q = q.ilike("drug_type", drug_type)
+        if featured_only:
+            q = q.eq("featured", True)
+        q = q.order("sort_order").order("id")
+        return q.execute().data or []
+    except Exception as e:
+        print("fetch_drugs error:", e)
+        return []
+
+
+def fetch_drug(drug_id):
+    try:
+        res = supabase.table("nh_drugs").select("*").eq("id", drug_id).single().execute()
+        return res.data
+    except Exception:
+        return None
 
 
 def fetch_videos():
     try:
-        return query("SELECT * FROM nh_videos ORDER BY sort_order ASC, id ASC")
+        res = supabase.table("nh_videos").select("*").order("sort_order").order("id").execute()
+        return res.data or []
     except Exception as e:
         print("fetch_videos error:", e)
         return []
@@ -499,14 +498,12 @@ def fetch_videos():
 
 def fetch_featured_video():
     try:
-        row = query(
-            "SELECT * FROM nh_videos WHERE is_featured = 1 "
-            "ORDER BY sort_order ASC LIMIT 1", one=True
-        )
-        if row:
-            return row
-        return query("SELECT * FROM nh_videos ORDER BY sort_order ASC LIMIT 1",
-                     one=True)
+        res = (supabase.table("nh_videos").select("*").eq("is_featured", True)
+               .order("sort_order").limit(1).execute())
+        if res.data:
+            return res.data[0]
+        res = supabase.table("nh_videos").select("*").order("sort_order").limit(1).execute()
+        return res.data[0] if res.data else None
     except Exception as e:
         print("fetch_featured_video error:", e)
         return None
@@ -515,8 +512,9 @@ def fetch_featured_video():
 def fetch_gallery():
     combined = []
     try:
-        rows = query("SELECT * FROM nh_gallery_images ORDER BY sort_order ASC, id ASC")
-        for g in rows:
+        res = (supabase.table("nh_gallery_images").select("*")
+               .order("sort_order").order("id").execute())
+        for g in (res.data or []):
             combined.append({
                 "id":     f"u-{g['id']}",
                 "db_id":  g["id"],
@@ -528,12 +526,9 @@ def fetch_gallery():
         print("fetch_gallery upload error:", e)
 
     try:
-        rows = query(
-            "SELECT id, name, image, sort_order FROM nh_projects "
-            "WHERE image IS NOT NULL AND image != '' "
-            "ORDER BY sort_order ASC, id ASC"
-        )
-        for p in rows:
+        res = (supabase.table("nh_projects").select("id, name, image, sort_order")
+               .not_.is_("image", "null").order("sort_order").order("id").execute())
+        for p in (res.data or []):
             if p.get("image"):
                 combined.append({
                     "id":     f"p-{p['id']}",
@@ -549,7 +544,6 @@ def fetch_gallery():
 
 
 def upload_to_bucket(file_storage, bucket, allowed_exts, max_bytes):
-    """Save file to static/uploads/<bucket>/. Returns public URL or None."""
     if not file_storage or not file_storage.filename:
         return None
     ext = file_storage.filename.rsplit(".", 1)[-1].lower()
@@ -558,34 +552,33 @@ def upload_to_bucket(file_storage, bucket, allowed_exts, max_bytes):
     data = file_storage.read()
     if len(data) > max_bytes:
         return None
-
-    subdir = os.path.join(UPLOAD_DIR, bucket)
-    os.makedirs(subdir, exist_ok=True)
-
     name = f"{uuid.uuid4().hex}.{ext}"
-    filepath = os.path.join(subdir, name)
     try:
-        with open(filepath, "wb") as f:
-            f.write(data)
-        return f"{UPLOAD_URL}/{bucket}/{name}"
+        supabase.storage.from_(bucket).upload(
+            path=name,
+            file=data,
+            file_options={"content-type": file_storage.mimetype or "application/octet-stream"},
+        )
+        return supabase.storage.from_(bucket).get_public_url(name)
     except Exception as e:
         print(f"upload to {bucket} error:", e)
         return None
 
 
-def delete_local_upload(url):
-    if not url or not url.startswith(UPLOAD_URL + "/"):
+def delete_from_bucket(url, bucket):
+    """Delete a file from a Supabase bucket given its public URL."""
+    if not url:
         return
-    rel = url[len(UPLOAD_URL) + 1:]
-    filepath = os.path.join(UPLOAD_DIR, rel)
     try:
-        if os.path.isfile(filepath):
-            os.remove(filepath)
+        marker = f"/storage/v1/object/public/{bucket}/"
+        if marker in url:
+            name = url.rsplit("/", 1)[-1]
+            supabase.storage.from_(bucket).remove([name])
     except Exception as e:
-        print("delete_local_upload error:", e)
+        print(f"delete from {bucket} error:", e)
 
 
-def save_image(file_storage, bucket="nh-images"):
+def save_image(file_storage, bucket=BUCKET_IMAGES):
     return upload_to_bucket(
         file_storage, bucket,
         {"png", "jpg", "jpeg", "gif", "webp", "svg"},
@@ -593,11 +586,11 @@ def save_image(file_storage, bucket="nh-images"):
     )
 
 
-def save_video(file_storage):
+def save_video(file_storage, max_bytes=MAX_VIDEO_BYTES):
     return upload_to_bucket(
-        file_storage, "nh-videos",
+        file_storage, BUCKET_VIDEOS,
         {"mp4", "webm", "mov", "m4v"},
-        MAX_VIDEO_BYTES,
+        max_bytes,
     )
 
 
@@ -628,10 +621,10 @@ def _normalize(text):
     return " ".join(text.split())
 
 
-def _matches(query_str, *texts):
-    if not query_str:
+def _matches(query, *texts):
+    if not query:
         return False
-    q = _normalize(query_str)
+    q = _normalize(query)
     if not q:
         return False
     joined = " ".join(_normalize(t) for t in texts)
@@ -660,6 +653,8 @@ def index():
         grid_projects=grid,
         featured_video=fetch_featured_video(),
         custom_types=fetch_custom_types(),
+        drugs=fetch_drugs()[:8],
+        drug_types=fetch_active_drug_type_labels(),
     )
 
 
@@ -705,7 +700,7 @@ def project_detail(slug):
         "project_detail.html",
         project=project,
         images=fetch_project_images(project["id"]),
-        related=fetch_projects(category=project["category"])[:3],
+        related=fetch_projects(category=project["category"])[:4],
         max_images=MAX_PROJECT_IMAGES,
     )
 
@@ -736,6 +731,22 @@ def commercial():
     )
 
 
+@app.route("/drugs")
+def drugs_page():
+    drug_type = (request.args.get("type") or "").strip()
+    if drug_type:
+        drugs = fetch_drugs(drug_type=drug_type)
+    else:
+        drugs = fetch_drugs()
+
+    return render_template(
+        "drugs.html",
+        drugs=drugs,
+        drug_types=fetch_active_drug_type_labels(),
+        active_type=drug_type or None,
+    )
+
+
 @app.route("/about")
 def about():
     return render_template("about.html")
@@ -751,10 +762,10 @@ def contact():
         message = (request.form.get("message") or "").strip()
         if name and message:
             try:
-                insert_row("nh_inquiries", {
+                supabase.table("nh_inquiries").insert({
                     "kind": "contact", "name": name, "email": email,
                     "phone": phone, "subject": subject, "message": message,
-                })
+                }).execute()
                 flash("Thank you! Your message has been received.", "success")
             except Exception as e:
                 print("contact insert error:", e)
@@ -775,11 +786,11 @@ def book():
         message        = (request.form.get("message") or "").strip()
         if name and (email or phone):
             try:
-                insert_row("nh_inquiries", {
+                supabase.table("nh_inquiries").insert({
                     "kind": "booking", "name": name, "email": email,
                     "phone": phone, "message": message,
                     "preferred_date": preferred_date,
-                })
+                }).execute()
                 flash("Booking received!", "success")
             except Exception as e:
                 print("book insert error:", e)
@@ -832,6 +843,15 @@ def api_search():
                             "url": url_for("project_detail", slug=p["slug"]),
                             "icon": "fa-solid fa-building"})
 
+    for d in fetch_drugs():
+        price_str = f"{d.get('price', 0):,}"
+        if _matches(q, d["name"], d.get("drug_type",""), d.get("description",""),
+                    price_str, str(d.get("price",""))):
+            results.append({"type": "drug", "title": d["name"],
+                            "subtitle": f"{d.get('drug_type','')} · {price_str}",
+                            "url": url_for("drugs_page"),
+                            "icon": "fa-solid fa-prescription-bottle-medical"})
+
     for v in fetch_videos():
         if _matches(q, v["title"], v.get("description","")):
             results.append({"type": "video", "title": v["title"],
@@ -877,17 +897,19 @@ def update_logout():
 def update_dashboard():
     def count(table):
         try:
-            row = query(f"SELECT COUNT(*) AS n FROM {table}", one=True)
-            return row["n"] if row else 0
+            res = supabase.table(table).select("id").execute()
+            return len(res.data or [])
         except Exception:
             return 0
     stats = {
         "projects":   count("nh_projects"),
+        "drugs":      count("nh_drugs"),
         "videos":     count("nh_videos"),
         "gallery":    count("nh_gallery_images"),
         "inquiries":  count("nh_inquiries"),
         "nav":        count("nh_nav_links"),
         "types":      count("nh_property_types"),
+        "drug_types": count("nh_drug_types"),
     }
     return render_template("update/dashboard.html", stats=stats)
 
@@ -908,7 +930,7 @@ def update_site():
                     file_field = f"file_{key}"
                     url_field  = f"url_{key}"
                     if file_field in request.files and request.files[file_field].filename:
-                        url = save_image(request.files[file_field], "nh-images")
+                        url = save_image(request.files[file_field], BUCKET_IMAGES)
                         if url:
                             val = url
                     if val is None and url_field in request.form:
@@ -921,11 +943,8 @@ def update_site():
                     val = request.form.get(key, "").strip()
                     rows.append({"key": key, "value": val})
         try:
-            for r in rows:
-                execute(
-                    "INSERT OR REPLACE INTO nh_site_content (key, value) VALUES (?, ?)",
-                    (r["key"], r["value"]),
-                )
+            if rows:
+                supabase.table("nh_site_content").upsert(rows, on_conflict="key").execute()
             flash("Site content updated.", "success")
         except Exception as e:
             print("update_site error:", e)
@@ -952,16 +971,13 @@ def update_property_type_new():
         flash("Type name is required.", "error")
         return redirect(url_for("update_property_types"))
     try:
-        existing = query(
-            "SELECT id FROM nh_property_types WHERE LOWER(label) = LOWER(?) LIMIT 1",
-            (label,), one=True
-        )
-        if existing:
+        res = supabase.table("nh_property_types").select("id").ilike("label", label).limit(1).execute()
+        if res.data:
             flash("That type already exists.", "error")
             return redirect(url_for("update_property_types"))
-        insert_row("nh_property_types", {
-            "label": label, "sort_order": order, "is_active": 1,
-        })
+        supabase.table("nh_property_types").insert({
+            "label": label, "sort_order": order, "is_active": True,
+        }).execute()
         flash("Type added.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -973,22 +989,19 @@ def update_property_type_new():
 def update_property_type_edit(tid):
     label  = (request.form.get("label") or "").strip()
     order  = request.form.get("sort_order", 99, type=int)
-    active = 1 if request.form.get("is_active") == "on" else 0
+    active = request.form.get("is_active") == "on"
     if not label:
         flash("Type name is required.", "error")
         return redirect(url_for("update_property_types"))
     try:
-        old = query("SELECT label FROM nh_property_types WHERE id = ? LIMIT 1",
-                    (tid,), one=True)
-        old_label = (old or {}).get("label", "")
-        update_row("nh_property_types", {
+        old = supabase.table("nh_property_types").select("label").eq("id", tid).single().execute()
+        old_label = (old.data or {}).get("label", "")
+        supabase.table("nh_property_types").update({
             "label": label, "sort_order": order, "is_active": active,
-        }, "id", tid)
+        }).eq("id", tid).execute()
         if old_label and old_label != label:
-            execute(
-                "UPDATE nh_projects SET custom_type = ? WHERE LOWER(custom_type) = LOWER(?)",
-                (label, old_label)
-            )
+            supabase.table("nh_projects").update({"custom_type": label}) \
+                .ilike("custom_type", old_label).execute()
         flash("Type updated.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -999,11 +1012,77 @@ def update_property_type_edit(tid):
 @login_required
 def update_property_type_delete(tid):
     try:
-        execute("DELETE FROM nh_property_types WHERE id = ?", (tid,))
+        supabase.table("nh_property_types").delete().eq("id", tid).execute()
         flash("Type deleted.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
     return redirect(url_for("update_property_types"))
+
+
+# ============================================================
+# ADMIN — DRUG TYPES
+# ============================================================
+@app.route("/update/drug-types")
+@login_required
+def update_drug_types():
+    return render_template("update/drug_types.html", types=fetch_drug_types())
+
+
+@app.route("/update/drug-types/new", methods=["POST"])
+@login_required
+def update_drug_type_new():
+    label = (request.form.get("label") or "").strip()
+    order = request.form.get("sort_order", 99, type=int)
+    if not label:
+        flash("Type name is required.", "error")
+        return redirect(url_for("update_drug_types"))
+    try:
+        res = supabase.table("nh_drug_types").select("id").ilike("label", label).limit(1).execute()
+        if res.data:
+            flash("That type already exists.", "error")
+            return redirect(url_for("update_drug_types"))
+        supabase.table("nh_drug_types").insert({
+            "label": label, "sort_order": order, "is_active": True,
+        }).execute()
+        flash("Type added.", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    return redirect(url_for("update_drug_types"))
+
+
+@app.route("/update/drug-types/edit/<int:tid>", methods=["POST"])
+@login_required
+def update_drug_type_edit(tid):
+    label  = (request.form.get("label") or "").strip()
+    order  = request.form.get("sort_order", 99, type=int)
+    active = request.form.get("is_active") == "on"
+    if not label:
+        flash("Type name is required.", "error")
+        return redirect(url_for("update_drug_types"))
+    try:
+        old = supabase.table("nh_drug_types").select("label").eq("id", tid).single().execute()
+        old_label = (old.data or {}).get("label", "")
+        supabase.table("nh_drug_types").update({
+            "label": label, "sort_order": order, "is_active": active,
+        }).eq("id", tid).execute()
+        if old_label and old_label != label:
+            supabase.table("nh_drugs").update({"drug_type": label}) \
+                .ilike("drug_type", old_label).execute()
+        flash("Type updated.", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    return redirect(url_for("update_drug_types"))
+
+
+@app.route("/update/drug-types/delete/<int:tid>", methods=["POST"])
+@login_required
+def update_drug_type_delete(tid):
+    try:
+        supabase.table("nh_drug_types").delete().eq("id", tid).execute()
+        flash("Type deleted.", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    return redirect(url_for("update_drug_types"))
 
 
 # ============================================================
@@ -1033,8 +1112,11 @@ def update_project_new():
 @app.route("/update/projects/edit/<int:pid>", methods=["GET", "POST"])
 @login_required
 def update_project_edit(pid):
-    project = query("SELECT * FROM nh_projects WHERE id = ? LIMIT 1",
-                    (pid,), one=True)
+    try:
+        res = supabase.table("nh_projects").select("*").eq("id", pid).single().execute()
+        project = res.data
+    except Exception:
+        project = None
     if not project:
         abort(404)
     if request.method == "POST":
@@ -1066,30 +1148,28 @@ def _save_project(project):
         price_from = int(float(request.form.get("price_from", 0) or 0))
     except (ValueError, TypeError):
         price_from = 0
-    featured = 1 if request.form.get("featured") == "on" else 0
+    featured = request.form.get("featured") == "on"
 
     video_description = (request.form.get("video_description") or "").strip()
 
     image_uploaded = None
     if "image_file" in request.files and request.files["image_file"].filename:
-        image_uploaded = save_image(request.files["image_file"], "nh-images")
-        if not image_uploaded:
-            flash(f"Card image upload failed — check format/size (max "
-                  f"{MAX_IMAGE_BYTES // (1024*1024)}MB).", "error")
+        image_uploaded = save_image(request.files["image_file"], BUCKET_IMAGES)
 
     hero_uploaded = None
     if "hero_file" in request.files and request.files["hero_file"].filename:
-        hero_uploaded = save_image(request.files["hero_file"], "nh-images")
-        if not hero_uploaded:
-            flash(f"Hero image upload failed — check format/size (max "
-                  f"{MAX_IMAGE_BYTES // (1024*1024)}MB).", "error")
+        hero_uploaded = save_image(request.files["hero_file"], BUCKET_IMAGES)
 
     video_uploaded = None
     if "video_file" in request.files and request.files["video_file"].filename:
-        video_uploaded = save_video(request.files["video_file"])
-        if not video_uploaded:
-            flash(f"Video upload failed — check format/size (max "
-                  f"{MAX_VIDEO_BYTES // (1024*1024)}MB).", "error")
+        vfile = request.files["video_file"]
+        data = vfile.read()
+        if len(data) > MAX_PROJECT_VIDEO_BYTES:
+            flash(f"Video exceeds {MAX_PROJECT_VIDEO_BYTES // (1024*1024)}MB limit.", "error")
+            vfile.seek(0)
+        else:
+            vfile.seek(0)
+            video_uploaded = save_video(vfile, MAX_PROJECT_VIDEO_BYTES)
 
     image = image_uploaded or request.form.get("image_url","").strip() or \
             (project["image"] if project else "")
@@ -1110,12 +1190,13 @@ def _save_project(project):
 
     try:
         if project:
-            update_row("nh_projects", payload, "id", project["id"])
+            supabase.table("nh_projects").update(payload).eq("id", project["id"]).execute()
             flash("Property updated.", "success")
         else:
             payload["sort_order"] = 99
-            insert_row("nh_projects", payload)
+            supabase.table("nh_projects").insert(payload).execute()
             flash("Property created.", "success")
+
         if custom_type:
             ensure_property_type(custom_type)
     except Exception as e:
@@ -1128,12 +1209,11 @@ def _save_project(project):
 @login_required
 def update_project_delete(pid):
     try:
-        # Clean up gallery files first
+        # Delete all gallery images for this project
         for img in fetch_project_images(pid):
-            if img.get("image_url"):
-                delete_local_upload(img["image_url"])
-        execute("DELETE FROM nh_project_images WHERE project_id = ?", (pid,))
-        execute("DELETE FROM nh_projects WHERE id = ?", (pid,))
+            delete_from_bucket(img.get("image_url"), BUCKET_IMAGES)
+        supabase.table("nh_project_images").delete().eq("project_id", pid).execute()
+        supabase.table("nh_projects").delete().eq("id", pid).execute()
         flash("Property deleted.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1146,9 +1226,11 @@ def update_project_delete(pid):
 @app.route("/update/projects/<int:pid>/gallery/add", methods=["POST"])
 @login_required
 def update_project_gallery_add(pid):
-    project = query("SELECT * FROM nh_projects WHERE id = ? LIMIT 1",
-                    (pid,), one=True)
-    if not project:
+    try:
+        res = supabase.table("nh_projects").select("id").eq("id", pid).single().execute()
+        if not res.data:
+            abort(404)
+    except Exception:
         abort(404)
 
     existing = fetch_project_images(pid)
@@ -1163,18 +1245,18 @@ def update_project_gallery_add(pid):
         flash("Please choose an image file.", "error")
         return redirect(url_for("update_project_edit", pid=pid))
 
-    url = save_image(file, "nh-images")
+    url = save_image(file, BUCKET_IMAGES)
     if not url:
-        flash(f"Invalid image or exceeds {MAX_IMAGE_BYTES // (1024*1024)}MB limit.", "error")
+        flash("Invalid image or exceeds 5MB limit.", "error")
         return redirect(url_for("update_project_edit", pid=pid))
 
     try:
-        insert_row("nh_project_images", {
+        supabase.table("nh_project_images").insert({
             "project_id":  pid,
             "image_url":   url,
             "description": desc,
             "sort_order":  len(existing) + 1,
-        })
+        }).execute()
         flash("Image added to gallery.", "success")
     except Exception as e:
         print("gallery add error:", e)
@@ -1186,21 +1268,109 @@ def update_project_gallery_add(pid):
 @login_required
 def update_project_gallery_delete(img_id):
     try:
-        row = query(
-            "SELECT image_url, project_id FROM nh_project_images WHERE id = ? LIMIT 1",
-            (img_id,), one=True
-        )
+        res = supabase.table("nh_project_images").select("*").eq("id", img_id).single().execute()
+        row = res.data
         if row:
             pid = row["project_id"]
-            if row["image_url"]:
-                delete_local_upload(row["image_url"])
-            execute("DELETE FROM nh_project_images WHERE id = ?", (img_id,))
+            delete_from_bucket(row.get("image_url"), BUCKET_IMAGES)
+            supabase.table("nh_project_images").delete().eq("id", img_id).execute()
             flash("Gallery image deleted.", "success")
             return redirect(url_for("update_project_edit", pid=pid))
     except Exception as e:
         print("gallery delete error:", e)
         flash(f"Error: {e}", "error")
     return redirect(url_for("update_projects"))
+
+
+# ============================================================
+# ADMIN — DRUGS
+# ============================================================
+@app.route("/update/drugs")
+@login_required
+def update_drugs():
+    return render_template("update/drugs.html", drugs=fetch_drugs())
+
+
+@app.route("/update/drugs/new", methods=["GET", "POST"])
+@login_required
+def update_drug_new():
+    if request.method == "POST":
+        return _save_drug(None)
+    return render_template("update/drug_form.html", drug=None,
+                           drug_types=fetch_drug_types(only_active=True))
+
+
+@app.route("/update/drugs/edit/<int:did>", methods=["GET", "POST"])
+@login_required
+def update_drug_edit(did):
+    drug = fetch_drug(did)
+    if not drug:
+        abort(404)
+    if request.method == "POST":
+        return _save_drug(drug)
+    return render_template("update/drug_form.html", drug=drug,
+                           drug_types=fetch_drug_types(only_active=True))
+
+
+def _save_drug(drug):
+    name        = (request.form.get("name") or "").strip()
+    slug        = (request.form.get("slug") or "").strip().lower().replace(" ", "-")
+    drug_type   = (request.form.get("drug_type") or "").strip()
+    currency    = (request.form.get("currency") or "GHS").strip()
+    description = (request.form.get("description") or "").strip()
+    try:
+        price = int(float(request.form.get("price", 0) or 0))
+    except (ValueError, TypeError):
+        price = 0
+    featured = request.form.get("featured") == "on"
+
+    image_uploaded = None
+    if "image_file" in request.files and request.files["image_file"].filename:
+        image_uploaded = save_image(request.files["image_file"], BUCKET_IMAGES)
+
+    video_uploaded = None
+    if "video_file" in request.files and request.files["video_file"].filename:
+        video_uploaded = save_video(request.files["video_file"])
+
+    image = image_uploaded or request.form.get("image_url","").strip() or \
+            (drug["image"] if drug else "")
+    video = video_uploaded or request.form.get("video_url","").strip() or \
+            (drug.get("video") if drug else "")
+
+    payload = {
+        "name": name, "slug": slug, "drug_type": drug_type,
+        "price": price, "currency": currency,
+        "description": description,
+        "image": image, "video": video,
+        "featured": featured,
+    }
+
+    try:
+        if drug:
+            supabase.table("nh_drugs").update(payload).eq("id", drug["id"]).execute()
+            flash("Product updated.", "success")
+        else:
+            payload["sort_order"] = 99
+            supabase.table("nh_drugs").insert(payload).execute()
+            flash("Product created.", "success")
+
+        if drug_type:
+            ensure_drug_type(drug_type)
+    except Exception as e:
+        print("save drug error:", e)
+        flash(f"Error: {e}", "error")
+    return redirect(url_for("update_drugs"))
+
+
+@app.route("/update/drugs/delete/<int:did>", methods=["POST"])
+@login_required
+def update_drug_delete(did):
+    try:
+        supabase.table("nh_drugs").delete().eq("id", did).execute()
+        flash("Product deleted.", "success")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    return redirect(url_for("update_drugs"))
 
 
 # ============================================================
@@ -1234,14 +1404,14 @@ def update_video_upload():
         flash(f"Invalid video or exceeds {MAX_VIDEO_BYTES // (1024*1024)}MB limit.", "error")
         return redirect(url_for("update_videos"))
 
-    featured = 1 if request.form.get("is_featured") == "on" else 0
+    featured = request.form.get("is_featured") == "on"
     try:
         if featured:
-            execute("UPDATE nh_videos SET is_featured = 0")
-        insert_row("nh_videos", {
+            supabase.table("nh_videos").update({"is_featured": False}).neq("id", 0).execute()
+        supabase.table("nh_videos").insert({
             "title": title, "description": desc, "filename": url,
             "is_featured": featured, "sort_order": len(existing) + 1,
-        })
+        }).execute()
         flash("Video uploaded.", "success")
     except Exception as e:
         print("video upload error:", e)
@@ -1254,13 +1424,13 @@ def update_video_upload():
 def update_video_edit(vid):
     title = (request.form.get("title") or "").strip() or "Untitled"
     desc  = (request.form.get("description") or "").strip()
-    featured = 1 if request.form.get("is_featured") == "on" else 0
+    featured = request.form.get("is_featured") == "on"
     try:
         if featured:
-            execute("UPDATE nh_videos SET is_featured = 0 WHERE id != ?", (vid,))
-        update_row("nh_videos", {
+            supabase.table("nh_videos").update({"is_featured": False}).neq("id", vid).execute()
+        supabase.table("nh_videos").update({
             "title": title, "description": desc, "is_featured": featured,
-        }, "id", vid)
+        }).eq("id", vid).execute()
         flash("Video updated.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1271,12 +1441,10 @@ def update_video_edit(vid):
 @login_required
 def update_video_delete(vid):
     try:
-        row = query("SELECT filename FROM nh_videos WHERE id = ? LIMIT 1",
-                    (vid,), one=True)
-        filename = (row or {}).get("filename", "")
-        if filename:
-            delete_local_upload(filename)
-        execute("DELETE FROM nh_videos WHERE id = ?", (vid,))
+        res = supabase.table("nh_videos").select("filename").eq("id", vid).single().execute()
+        filename = (res.data or {}).get("filename", "")
+        delete_from_bucket(filename, BUCKET_VIDEOS)
+        supabase.table("nh_videos").delete().eq("id", vid).execute()
         flash("Video deleted.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1297,14 +1465,14 @@ def update_gallery():
 def update_gallery_upload():
     title = (request.form.get("title") or "").strip()
     file  = request.files.get("image")
-    url   = save_image(file, "nh-gallery")
+    url   = save_image(file, BUCKET_GALLERY)
     if not url:
-        flash("Invalid image or exceeds size limit.", "error")
+        flash("Invalid image or exceeds 5MB.", "error")
         return redirect(url_for("update_gallery"))
     try:
-        insert_row("nh_gallery_images", {
+        supabase.table("nh_gallery_images").insert({
             "title": title, "filename": url, "source": "upload", "sort_order": 99,
-        })
+        }).execute()
         flash("Image uploaded.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1315,12 +1483,10 @@ def update_gallery_upload():
 @login_required
 def update_gallery_delete(img_id):
     try:
-        row = query("SELECT filename FROM nh_gallery_images WHERE id = ? LIMIT 1",
-                    (img_id,), one=True)
-        url = (row or {}).get("filename", "")
-        if url:
-            delete_local_upload(url)
-        execute("DELETE FROM nh_gallery_images WHERE id = ?", (img_id,))
+        res = supabase.table("nh_gallery_images").select("filename").eq("id", img_id).single().execute()
+        url = (res.data or {}).get("filename", "")
+        delete_from_bucket(url, BUCKET_GALLERY)
+        supabase.table("nh_gallery_images").delete().eq("id", img_id).execute()
         flash("Image deleted.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1334,7 +1500,8 @@ def update_gallery_delete(img_id):
 @login_required
 def update_nav():
     try:
-        links = query("SELECT * FROM nh_nav_links ORDER BY sort_order ASC, id ASC")
+        res = supabase.table("nh_nav_links").select("*").order("sort_order").order("id").execute()
+        links = res.data or []
     except Exception:
         links = []
     return render_template("update/nav.html", links=links)
@@ -1348,10 +1515,10 @@ def update_nav_new():
     order = request.form.get("sort_order", 99, type=int)
     if label and url:
         try:
-            insert_row("nh_nav_links", {
+            supabase.table("nh_nav_links").insert({
                 "label": label, "url": url, "sort_order": order,
-                "is_locked": 0, "visible": 1,
-            })
+                "is_locked": False, "visible": True,
+            }).execute()
             flash("Nav link added.", "success")
         except Exception as e:
             flash(f"Error: {e}", "error")
@@ -1364,18 +1531,18 @@ def update_nav_new():
 @login_required
 def update_nav_edit(lid):
     try:
-        row = query("SELECT * FROM nh_nav_links WHERE id = ? LIMIT 1",
-                    (lid,), one=True)
+        res = supabase.table("nh_nav_links").select("*").eq("id", lid).single().execute()
+        row = res.data
         if not row:
             abort(404)
         if row.get("is_locked"):
             flash("This link is locked.", "error")
             return redirect(url_for("update_nav"))
-        update_row("nh_nav_links", {
+        supabase.table("nh_nav_links").update({
             "label": (request.form.get("label") or "").strip(),
             "url":   (request.form.get("url") or "").strip(),
             "sort_order": request.form.get("sort_order", row["sort_order"], type=int),
-        }, "id", lid)
+        }).eq("id", lid).execute()
         flash("Nav link updated.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1386,12 +1553,11 @@ def update_nav_edit(lid):
 @login_required
 def update_nav_delete(lid):
     try:
-        row = query("SELECT is_locked FROM nh_nav_links WHERE id = ? LIMIT 1",
-                    (lid,), one=True)
-        if (row or {}).get("is_locked"):
+        res = supabase.table("nh_nav_links").select("is_locked").eq("id", lid).single().execute()
+        if (res.data or {}).get("is_locked"):
             flash("This link is locked.", "error")
             return redirect(url_for("update_nav"))
-        execute("DELETE FROM nh_nav_links WHERE id = ?", (lid,))
+        supabase.table("nh_nav_links").delete().eq("id", lid).execute()
         flash("Nav link deleted.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
@@ -1405,7 +1571,8 @@ def update_nav_delete(lid):
 @login_required
 def update_inquiries():
     try:
-        inquiries = query("SELECT * FROM nh_inquiries ORDER BY id DESC")
+        res = supabase.table("nh_inquiries").select("*").order("id", desc=True).execute()
+        inquiries = res.data or []
     except Exception:
         inquiries = []
     return render_template("update/inquiries.html", inquiries=inquiries)
@@ -1415,7 +1582,7 @@ def update_inquiries():
 @login_required
 def update_inquiry_delete(iid):
     try:
-        execute("DELETE FROM nh_inquiries WHERE id = ?", (iid,))
+        supabase.table("nh_inquiries").delete().eq("id", iid).execute()
         flash("Inquiry deleted.", "success")
     except Exception as e:
         flash(f"Error: {e}", "error")
