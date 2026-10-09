@@ -42,23 +42,38 @@ MAX_VIDEO_BYTES         = 20 * 1024 * 1024      # 20 MB
 MAX_IMAGE_BYTES         = 15 * 1024 * 1024      # 15 MB
 MAX_PROJECT_IMAGES      = 7
 MAX_PROJECT_VIDEO_BYTES = 20 * 1024 * 1024      # 20 MB
-MAX_FEATURED_ON_HOME    = 6                     # ⬅ homepage featured cap
+MAX_FEATURED_ON_HOME    = 6                     # homepage featured cap
 
 BUCKET_IMAGES  = "nh-images"
 BUCKET_GALLERY = "nh-gallery"
 BUCKET_VIDEOS  = "nh-videos"
 
+# ============================================================
+# FLASK APP
+# ============================================================
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config["MAX_CONTENT_LENGTH"] = 30 * 1024 * 1024
 
-app.config["SESSION_COOKIE_SECURE"]   = True
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+# ── ProxyFix FIRST (reads X-Forwarded-Proto from Render) ──
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+# ── Sessions ──
+# Render sets RENDER=true automatically.
+# Only enforce Secure cookies in production (so local dev over http works).
+IS_PRODUCTION = os.environ.get("RENDER", "").strip() != "" or \
+                os.environ.get("FLASK_ENV", "").lower() == "production"
 
-# Server-side Supabase client (service role bypasses RLS)
+app.config["SESSION_COOKIE_NAME"]        = "nh_session"
+app.config["SESSION_COOKIE_SECURE"]      = IS_PRODUCTION
+app.config["SESSION_COOKIE_HTTPONLY"]    = True
+app.config["SESSION_COOKIE_SAMESITE"]    = "Lax"
+app.config["PERMANENT_SESSION_LIFETIME"] = 60 * 60 * 24 * 7  # 7 days
+
+# ── Supabase client (server-side, service role) ──
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
@@ -524,9 +539,9 @@ def index():
     others   = [p for p in all_projects if not p.get("featured")]
     carousel = (featured + others)[:8]
 
-    # ⬇ Only featured projects on the homepage — capped at MAX_FEATURED_ON_HOME.
-    #   If you uncheck "Feature on main page", the project disappears from here.
-    #   If you mark 3, only 3 show. If you mark 10, only the top 6 (by sort_order) show.
+    # Only featured projects on the homepage — capped at MAX_FEATURED_ON_HOME.
+    # If you uncheck "Feature on main page", the project disappears from here.
+    # If you mark 3, only 3 show. If you mark 10, only the top 6 show.
     grid = featured[:MAX_FEATURED_ON_HOME]
 
     return render_template(
@@ -729,8 +744,9 @@ def api_search():
 @app.route("/update/login", methods=["GET", "POST"])
 def update_login():
     if request.method == "POST":
-        pwd = request.form.get("password", "")
+        pwd = (request.form.get("password") or "").strip()
         if pwd in ADMIN_PASSWORDS:
+            session.clear()
             session["admin_logged_in"] = True
             session.permanent = True
             return redirect(url_for("update_dashboard"))
@@ -1304,13 +1320,22 @@ def server_error(e):
 
 
 # ============================================================
-# INIT + RUN
+# LAZY DB INIT — runs once on first request, not at import time
+# This prevents Gunicorn worker startup timeout → no 502 on Render
 # ============================================================
-with app.app_context():
+_db_initialized = False
+
+@app.before_request
+def _ensure_db_initialized():
+    global _db_initialized
+    if _db_initialized:
+        return
+    _db_initialized = True
     try:
         init_db()
     except Exception as e:
         print("[INIT] skipped:", e)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
