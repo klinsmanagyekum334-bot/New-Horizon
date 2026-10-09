@@ -52,16 +52,10 @@
       <span>Properties</span>
     </a>
 
-    <a href="{{ url_for('update_drugs') }}"
-       class="{% if request.endpoint and request.endpoint.startswith('update_drug_') and 'type' not in request.endpoint %}active{% endif %}">
-      <i class="fa-solid fa-prescription-bottle-medical"></i>
-      <span>Drugs</span>
-    </a>
-
-    <a href="{{ url_for('update_drug_types') }}"
-       class="{% if request.endpoint and 'drug_type' in request.endpoint %}active{% endif %}">
-      <i class="fa-solid fa-capsules"></i>
-      <span>Drug Types</span>
+    <a href="{{ url_for('update_property_types') }}"
+       class="{% if request.endpoint and 'property_type' in request.endpoint %}active{% endif %}">
+      <i class="fa-solid fa-tags"></i>
+      <span>Property Types</span>
     </a>
 
     <a href="{{ url_for('update_videos') }}"
