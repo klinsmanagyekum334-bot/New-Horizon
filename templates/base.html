@@ -19,79 +19,28 @@
       justify-content: space-between !important;
       position: relative;
       padding: 8px 24px !important;
-      min-height: 0; /* ⬅ removed constraint for a tighter header */
+      min-height: 0;
     }
 
     /* ═══════════════════════════════════════════════════════
-       LOGO BLOCK
+       LOGO BLOCK — image logo
        ═══════════════════════════════════════════════════════ */
     .nh-golden-logo {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       line-height: 1;
       text-decoration: none;
       flex: 0 0 auto;
-      transform: translateY(-4px); /* subtle lift */
     }
 
-    /* ── GOLDEN (Gold Gradient) ─────────────────────────── */
-    .nh-golden-word {
-      font-family: 'Fraunces', 'Bodoni Moda', Georgia, serif;
-      font-weight: 900;
-      font-size: 34px; /* reduced size */
-      letter-spacing: 0.04em;
-      line-height: 1;
-      background: linear-gradient(
-        to bottom,
-        #FFF3A0 0%,
-        #FFD86B 22%,
-        #E8B33C 45%,
-        #B8860B 68%,
-        #8A5A0B 85%,
-        #5A3A05 100%
-      );
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-      margin-bottom: 2px;
-    }
-
-    /* ── Legacy Trust (Platinum/Silver Gradient) ────────── */
-    .nh-legacy-trust-word {
-      font-family: 'Fraunces', 'Bodoni Moda', Georgia, serif;
-      font-weight: 900;
-      font-style: italic;
-      font-size: 24px; /* reduced size */
-      line-height: 1;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      /* Premium silver/platinum metallic gradient */
-      background: linear-gradient(
-        to bottom,
-        #FFFFFF 0%,
-        #E2E8F0 25%,
-        #94A3B8 60%,
-        #64748B 85%,
-        #334155 100%
-      );
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-      margin-bottom: 4px;
-    }
-
-    /* ── LIMITED (Soft Platinum White) ──────────────────── */
-    .nh-limited-word {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-      font-size: 11px; /* reduced size */
-      letter-spacing: 0.45em;
-      color: #E2E8F0;
-      padding-left: 0.45em;
+    .nh-golden-logo img {
+      display: block;
+      height: 72px;
+      width: auto;
+      max-width: 320px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
     }
 
     /* ═══════════════════════════════════════════════════════
@@ -99,22 +48,15 @@
        ═══════════════════════════════════════════════════════ */
     @media (max-width: 1100px) {
       .nh-header-inner { padding: 6px 20px !important; }
-      .nh-golden-word { font-size: 30px; }
-      .nh-legacy-trust-word { font-size: 21px; }
-      .nh-limited-word { font-size: 10px; letter-spacing: 0.4em; padding-left: 0.4em; }
+      .nh-golden-logo img { height: 62px; max-width: 260px; }
     }
     @media (max-width: 900px) {
       .nh-header-inner { padding: 6px 16px !important; }
-      .nh-golden-word { font-size: 26px; }
-      .nh-legacy-trust-word { font-size: 18px; }
-      .nh-limited-word { font-size: 9px; letter-spacing: 0.35em; padding-left: 0.35em; }
+      .nh-golden-logo img { height: 54px; max-width: 220px; }
     }
     @media (max-width: 480px) {
       .nh-header-inner { padding: 4px 12px !important; }
-      .nh-golden-word { font-size: 22px; }
-      .nh-legacy-trust-word { font-size: 15px; }
-      .nh-limited-word { font-size: 8px; letter-spacing: 0.3em; padding-left: 0.3em; }
-      .nh-golden-logo { transform: translateY(-2px); }
+      .nh-golden-logo img { height: 46px; max-width: 180px; }
     }
   </style>
 </head>
@@ -126,11 +68,10 @@
 <header class="nh-header {% block header_class %}{% endblock %}">
   <div class="nh-header-inner">
 
-    <!-- ═══════ LOGO ═══════ -->
-    <a href="{{ url_for('index') }}" class="nh-golden-logo" aria-label="Golden Legacy Trust Limited">
-      <span class="nh-golden-word">GOLDEN</span>
-      <span class="nh-legacy-trust-word">Legacy Trust</span>
-      <span class="nh-limited-word">LIMITED</span>
+    <!-- ═══════ LOGO (image) ═══════ -->
+    <a href="{{ url_for('index') }}" class="nh-golden-logo" aria-label="{{ site.brand_name or 'New Horizon Coopers Limited' }}">
+      <img src="{{ url_for('static', filename='uploads/horizon1.jpg') }}"
+           alt="{{ site.brand_name or 'New Horizon Coopers Limited' }}">
     </a>
 
     <nav class="nh-nav-bar" aria-label="Primary">
