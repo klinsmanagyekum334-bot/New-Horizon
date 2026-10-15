@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ site.brand_name or "New Horizon Coopers Limited" }}{% endblock %}</title>
+  <title>{% block title %}{{ site.brand_name or "Golden Legacy Trust Limited" }}{% endblock %}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,50 +13,140 @@
 
   <style>
     /* ═══════════════════════════════════════════════════════
-       HEADER LAYOUT — Reduced Height
+       HEADER LAYOUT — logo pinned to left edge
        ═══════════════════════════════════════════════════════ */
     .nh-header-inner {
+      display: flex;
       justify-content: space-between !important;
+      align-items: center;
       position: relative;
-      padding: 8px 24px !important;
+      padding: 0 24px 0 0 !important;
       min-height: 0;
     }
 
-    /* ═══════════════════════════════════════════════════════
-       LOGO BLOCK — image logo
-       ═══════════════════════════════════════════════════════ */
     .nh-golden-logo {
       display: flex;
       align-items: center;
-      justify-content: center;
-      line-height: 1;
+      justify-content: flex-start;
+      line-height: 0;
       text-decoration: none;
       flex: 0 0 auto;
+      margin: 0;
+      padding: 0;
     }
 
     .nh-golden-logo img {
       display: block;
-      height: 72px;
-      width: auto;
-      max-width: 320px;
-      object-fit: contain;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+      height: 100px;
+      width: 230px;
+      max-width: 55vw;
+      object-fit: fill;
+      object-position: left center;
+      margin: 0;
+      padding: 0;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.28));
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       FOOTER BRAND — single-line horizontal, full width
+       ═══════════════════════════════════════════════════════ */
+    .nh-footer-brandline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      width: 100%;
+      padding: 22px 0 26px;
+      border-bottom: 1px solid rgba(180,150,220,0.14);
+      flex-wrap: wrap;
+    }
+
+    .nh-footer-brandline .bl-golden {
+      font-family: 'Fraunces', 'Bodoni Moda', Georgia, serif;
+      font-weight: 900;
+      font-size: clamp(26px, 3.2vw, 38px);
+      letter-spacing: 0.05em;
+      line-height: 1;
+      background: linear-gradient(
+        to bottom,
+        #FFF3A0 0%,
+        #FFD86B 22%,
+        #E8B33C 45%,
+        #B8860B 68%,
+        #8A5A0B 85%,
+        #5A3A05 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      white-space: nowrap;
+    }
+
+    .nh-footer-brandline .bl-line {
+      flex: 1 1 auto;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(232,138,26,0.35) 20%,
+        rgba(232,138,26,0.35) 80%,
+        transparent 100%
+      );
+      min-width: 20px;
+    }
+
+    .nh-footer-brandline .bl-legacy {
+      font-family: 'Fraunces', 'Bodoni Moda', Georgia, serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: clamp(20px, 2.4vw, 30px);
+      letter-spacing: 0.01em;
+      line-height: 1;
+      background: linear-gradient(
+        to bottom,
+        #FF7A7A 0%,
+        #FF3B3B 22%,
+        #E11D2E 48%,
+        #A50018 78%,
+        #5A0010 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      white-space: nowrap;
+    }
+
+    .nh-footer-brandline .bl-limited {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: clamp(11px, 1.1vw, 14px);
+      letter-spacing: 0.42em;
+      color: #E2E8F0;
+      padding-left: 0.42em;
+      white-space: nowrap;
     }
 
     /* ═══════════════════════════════════════════════════════
        RESPONSIVE
        ═══════════════════════════════════════════════════════ */
     @media (max-width: 1100px) {
-      .nh-header-inner { padding: 6px 20px !important; }
-      .nh-golden-logo img { height: 62px; max-width: 260px; }
+      .nh-header-inner { padding: 0 20px 0 0 !important; }
+      .nh-golden-logo img { height: 86px; width: 200px; max-width: 55vw; }
     }
     @media (max-width: 900px) {
-      .nh-header-inner { padding: 6px 16px !important; }
-      .nh-golden-logo img { height: 54px; max-width: 220px; }
+      .nh-header-inner { padding: 0 16px 0 0 !important; }
+      .nh-golden-logo img { height: 74px; width: 170px; max-width: 60vw; }
+      .nh-footer-brandline { gap: 16px; padding: 18px 0 22px; }
     }
     @media (max-width: 480px) {
-      .nh-header-inner { padding: 4px 12px !important; }
-      .nh-golden-logo img { height: 46px; max-width: 180px; }
+      .nh-header-inner { padding: 0 12px 0 0 !important; }
+      .nh-golden-logo img { height: 62px; width: 140px; max-width: 65vw; }
+      .nh-footer-brandline { gap: 10px; padding: 16px 0 20px; }
+      .nh-footer-brandline .bl-limited { letter-spacing: 0.32em; padding-left: 0.32em; }
     }
   </style>
 </head>
@@ -68,10 +158,9 @@
 <header class="nh-header {% block header_class %}{% endblock %}">
   <div class="nh-header-inner">
 
-    <!-- ═══════ LOGO (image) ═══════ -->
-    <a href="{{ url_for('index') }}" class="nh-golden-logo" aria-label="{{ site.brand_name or 'New Horizon Coopers Limited' }}">
+    <a href="{{ url_for('index') }}" class="nh-golden-logo" aria-label="{{ site.brand_name or 'Golden Legacy Trust Limited' }}">
       <img src="{{ url_for('static', filename='uploads/horizon1.jpg') }}"
-           alt="{{ site.brand_name or 'New Horizon Coopers Limited' }}">
+           alt="{{ site.brand_name or 'Golden Legacy Trust Limited' }}">
     </a>
 
     <nav class="nh-nav-bar" aria-label="Primary">
@@ -93,9 +182,6 @@
 
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       SEARCH BAR
-       ═══════════════════════════════════════════════════════ -->
   <div class="nh-search-bar" id="searchBar">
     <div class="nh-search-bar-wrap">
 
@@ -150,21 +236,19 @@
 <footer class="nh-footer">
   <div class="nh-container">
 
+    <!-- ═══════ SINGLE-LINE BRAND MARK (full width) ═══════ -->
+    <div class="nh-footer-brandline" aria-label="Golden Legacy Trust Limited">
+      <span class="bl-golden">GOLDEN</span>
+      <span class="bl-line" aria-hidden="true"></span>
+      <span class="bl-legacy">Legacy Trust</span>
+      <span class="bl-line" aria-hidden="true"></span>
+      <span class="bl-limited">LIMITED</span>
+    </div>
+
     <div class="nh-footer-top">
       <div class="nh-footer-brand">
-        <div class="nh-logo nh-logo-lg">
-          <span class="nh-logo-words">
-            <span class="nh-logo-word nh-logo-new">{{ site.brand_new or "NEW" }}</span>
-            <span class="nh-logo-word nh-logo-horizon">{{ site.brand_horizon or "HORIZON" }}</span>
-          </span>
-          <span class="nh-logo-meta nh-logo-meta-light">
-            <span class="nh-logo-coopers">{{ site.brand_coopers or "Coopers Limited" }}</span>
-            <span class="nh-logo-dot">·</span>
-            <span class="nh-logo-tagline">{{ site.brand_tagline or "Real Estate & Pharmaceutical Agency" }}</span>
-          </span>
-        </div>
         <p class="nh-footer-blurb">
-          {{ site.footer_blurb or "New Horizon Coopers Limited — building sustainable, modern communities across Ghana since 2017." }}
+          {{ site.footer_blurb or "Golden Legacy Trust Limited — building sustainable, modern communities across Ghana since 2017." }}
         </p>
       </div>
 
@@ -191,8 +275,8 @@
     </div>
 
     <div class="nh-footer-bottom">
-      <span>{{ site.footer_copyright or "© 2026 New Horizon Coopers Limited" }}</span>
-      <span>Developed by <strong>Ophyser</strong></span>
+      <span>{{ site.footer_copyright or "© 2026 Golden Legacy Trust Limited" }}</span>
+      <span>Developed by <strong>Ophyser</strong> · <a href="tel:0240044138" style="color:inherit;text-decoration:none;">0240044138</a></span>
     </div>
 
   </div>
@@ -201,7 +285,7 @@
 <!-- ═══════════════════════════════════════════════════════
      FLOATING WHATSAPP
      ═══════════════════════════════════════════════════════ -->
-<a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}?text={{ 'Hello New Horizon!' | urlencode }}"
+<a href="https://wa.me/{{ site.contact_whatsapp_num or '233243444343' }}?text={{ 'Hello Golden Legacy Trust!' | urlencode }}"
    target="_blank" rel="noopener" class="nh-wa" aria-label="WhatsApp">
   <i class="fa-brands fa-whatsapp"></i>
 </a>
