@@ -18,7 +18,7 @@ SUPABASE_URL         = os.environ.get("SUPABASE_URL", "https://soeenrjxrspfsexdi
 SUPABASE_KEY         = os.environ.get("SUPABASE_KEY", "sb_publishable_mYvFcs9_OSA0PTIbcj4djg_NHGB8DXC")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", SUPABASE_KEY)
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "newhorizon-secret-2026-klinsman")
+SECRET_KEY = os.environ.get("SECRET_KEY", "golden-legacy-secret-2026-klinsman")
 
 # ── Admin passwords — BOTH work ──────────────────────────────
 ADMIN_PASSWORDS = [
@@ -26,7 +26,6 @@ ADMIN_PASSWORDS = [
     "Horizon6202",
 ]
 
-# Optional: override via env (comma-separated)
 _env_pwds = os.environ.get("ADMIN_PASSWORDS", "").strip()
 if _env_pwds:
     ADMIN_PASSWORDS = [p.strip() for p in _env_pwds.split(",") if p.strip()]
@@ -34,7 +33,7 @@ if _env_pwds:
 WHATSAPP_NUMBER = "233243444343"
 PHONE_NUMBER    = "+233243444343"
 PHONE_DISPLAY   = "+233 24 344 4343"
-EMAIL_ADDRESS   = "info@newhorizongh.com"
+EMAIL_ADDRESS   = "info@newhorizongh.com"     # ← kept as requested
 ADDRESS         = "Tema Community 25, Ghana"
 
 MAX_VIDEOS              = 10
@@ -62,8 +61,6 @@ app.wsgi_app = ProxyFix(
 )
 
 # ── Sessions ──
-# Render sets RENDER=true automatically.
-# Only enforce Secure cookies in production (so local dev over http works).
 IS_PRODUCTION = os.environ.get("RENDER", "").strip() != "" or \
                 os.environ.get("FLASK_ENV", "").lower() == "production"
 
@@ -85,10 +82,10 @@ SITE_SCHEMA = [
         "section": "Branding",
         "icon": "fa-solid fa-tag",
         "fields": [
-            {"key": "brand_name",    "label": "Brand Name (browser tab)", "type": "text",  "default": "New Horizon Coopers Limited"},
-            {"key": "brand_new",     "label": "Logo Word 1 (dark)",       "type": "text",  "default": "NEW"},
-            {"key": "brand_horizon", "label": "Logo Word 2 (orange)",     "type": "text",  "default": "HORIZON"},
-            {"key": "brand_coopers", "label": "Coopers Limited line",     "type": "text",  "default": "Coopers Limited"},
+            {"key": "brand_name",    "label": "Brand Name (browser tab)", "type": "text",  "default": "GOLDEN LEGACY TRUST LIMITED"},
+            {"key": "brand_new",     "label": "Logo Word 1 (dark)",       "type": "text",  "default": "GOLDEN"},
+            {"key": "brand_horizon", "label": "Logo Word 2 (orange)",     "type": "text",  "default": "LEGACY"},
+            {"key": "brand_coopers", "label": "Sub-brand line",           "type": "text",  "default": "Trust Limited"},
             {"key": "brand_tagline", "label": "Tagline (below logo)",     "type": "text",  "default": "Real Estate & Pharmaceutical Agency"},
             {"key": "logo_path",     "label": "Admin Sidebar Logo",       "type": "image", "default": ""},
         ],
@@ -123,7 +120,7 @@ SITE_SCHEMA = [
         "section": "Real Estates Section (homepage)",
         "icon": "fa-solid fa-house-chimney-window",
         "fields": [
-            {"key": "estates_title",    "label": "Title — dark part",   "type": "text", "default": "NEW HORIZON"},
+            {"key": "estates_title",    "label": "Title — dark part",   "type": "text", "default": "GOLDEN LEGACY TRUST LIMITED"},
             {"key": "estates_title_em", "label": "Title — italic part", "type": "text", "default": "REAL ESTATES"},
             {"key": "estates_sub",      "label": "Subtext",             "type": "text", "default": "We have the following"},
             {"key": "estates_cta",      "label": "See-all button text", "type": "text", "default": "See all properties"},
@@ -156,7 +153,7 @@ SITE_SCHEMA = [
         "icon": "fa-solid fa-shoe-prints",
         "fields": [
             {"key": "footer_blurb", "label": "Blurb (under logo)", "type": "textarea",
-             "default": "New Horizon Coopers Limited — building sustainable, modern communities across Ghana since 2017."},
+             "default": "GOLDEN LEGACY TRUST LIMITED — building sustainable, modern communities across Ghana since 2017."},
             {"key": "footer_col_company",   "label": "Col 1 — heading", "type": "text", "default": "Company"},
             {"key": "footer_link_about",    "label": "Col 1 — Link 1",  "type": "text", "default": "About"},
             {"key": "footer_link_projects", "label": "Col 1 — Link 2",  "type": "text", "default": "Projects"},
@@ -166,7 +163,7 @@ SITE_SCHEMA = [
             {"key": "footer_link_realestate", "label": "Col 2 — Link 1",  "type": "text", "default": "Real Estate"},
             {"key": "footer_link_pharma",     "label": "Col 2 — Link 2",  "type": "text", "default": "Pharmaceuticals"},
             {"key": "footer_col_contact", "label": "Col 3 — heading", "type": "text", "default": "Contact"},
-            {"key": "footer_copyright", "label": "Bottom bar — copyright", "type": "text", "default": "© 2026 New Horizon Coopers Limited"},
+            {"key": "footer_copyright", "label": "Bottom bar — copyright", "type": "text", "default": "© 2026 GOLDEN LEGACY TRUST LIMITED"},
         ],
     },
 ]
@@ -269,7 +266,7 @@ def init_db():
 
     # Video placeholder
     seed_if_empty("nh_videos", [
-        {"title":"New Horizon Showreel",
+        {"title":"Golden Legacy Trust Showreel",
          "description":"A glimpse into our latest developments across Ghana.",
          "filename":"", "is_featured": True, "sort_order": 1}
     ])
@@ -540,8 +537,6 @@ def index():
     carousel = (featured + others)[:8]
 
     # Only featured projects on the homepage — capped at MAX_FEATURED_ON_HOME.
-    # If you uncheck "Feature on main page", the project disappears from here.
-    # If you mark 3, only 3 show. If you mark 10, only the top 6 show.
     grid = featured[:MAX_FEATURED_ON_HOME]
 
     return render_template(
@@ -1320,22 +1315,9 @@ def server_error(e):
 
 
 # ============================================================
-# LAZY DB INIT — runs once on first request, not at import time
-# This prevents Gunicorn worker startup timeout → no 502 on Render
+# INIT + RUN
 # ============================================================
-_db_initialized = False
-
-@app.before_request
-def _ensure_db_initialized():
-    global _db_initialized
-    if _db_initialized:
-        return
-    _db_initialized = True
-    try:
-        init_db()
-    except Exception as e:
-        print("[INIT] skipped:", e)
-
+init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
